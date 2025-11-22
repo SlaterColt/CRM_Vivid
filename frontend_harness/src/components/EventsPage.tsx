@@ -8,7 +8,9 @@ import {
   RelatedNotes,
   EventParticipantsTable,
 } from "./RelatedTables";
-import { DocumentsSection } from "./DocumentsSection"; // The Reusable Component
+import { DocumentsSection } from "./DocumentsSection";
+// --- NEW: Import the Financials Module ---
+import FinancialsSection from "./FinancialsSection";
 
 type EventFormData = Omit<EventDto, "id">;
 type ValidationErrors = { [key: string]: string[] };
@@ -260,7 +262,6 @@ function EventsPage() {
         }}>
         <h2>{isEditing ? "Edit Event" : "Create Event"}</h2>
         <form onSubmit={handleSubmit}>
-          {/* Form Fields Omitted for Brevity, they remain unchanged */}
           <div style={{ marginBottom: "0.5rem" }}>
             <label>Name: </label>
             <input
@@ -411,17 +412,39 @@ function EventsPage() {
             marginTop: "3rem",
             paddingTop: "1rem",
           }}>
-          <h2>Dashboard: Event ID {selectedEventId}</h2>
+          <h2 style={{ marginBottom: "2rem" }}>
+            Dashboard: Event ID {selectedEventId}
+          </h2>
 
-          <ContactLinker
-            eventId={selectedEventId}
-            onLinkSuccess={forceDashboardRefresh}
-          />
+          {/* 1. Financials (High Priority) */}
+          <div style={{ marginBottom: "3rem" }}>
+            <FinancialsSection eventId={selectedEventId} />
+          </div>
 
-          {/* REUSABLE DOCUMENTS SECTION */}
-          <DocumentsSection entityId={selectedEventId} entityType="Event" />
+          <hr style={{ margin: "2rem 0", borderColor: "#ccc" }} />
 
-          <EventParticipantsTable onUnlinkSuccess={forceDashboardRefresh} />
+          {/* 2. Contacts & Documents */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "2rem",
+            }}>
+            <div>
+              <ContactLinker
+                eventId={selectedEventId}
+                onLinkSuccess={forceDashboardRefresh}
+              />
+              <EventParticipantsTable onUnlinkSuccess={forceDashboardRefresh} />
+            </div>
+            <div>
+              <DocumentsSection entityId={selectedEventId} entityType="Event" />
+            </div>
+          </div>
+
+          <hr style={{ margin: "2rem 0", borderColor: "#ccc" }} />
+
+          {/* 3. Operational (Tasks & Notes) */}
           <RelatedTasks />
           <RelatedNotes />
         </div>

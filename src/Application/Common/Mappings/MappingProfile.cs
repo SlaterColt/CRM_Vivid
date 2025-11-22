@@ -5,7 +5,8 @@ using CRM_Vivid.Application.Tasks.Commands;
 using CRM_Vivid.Application.Vendors.Commands;
 using CRM_Vivid.Core.Enum;
 using CRM_Vivid.Application.Notes.Commands;
-using CRM_Vivid.Application.Templates.Commands; // Added Namespace
+using CRM_Vivid.Application.Templates.Commands;
+using System;
 
 namespace CRM_Vivid.Application.Common.Mappings
 {
@@ -38,9 +39,14 @@ namespace CRM_Vivid.Application.Common.Mappings
       CreateMap<UpdateNoteCommand, Note>()
           .ForMember(d => d.Content, opt => opt.MapFrom(s => s.Content));
 
-      // NEW: Template Mappings
       CreateMap<Template, TemplateDto>()
           .ForMember(d => d.Type, opt => opt.MapFrom(s => s.Type.ToString()));
+
+      // --- NEW: Financial Mappings ---
+      CreateMap<Expense, ExpenseDto>()
+          .ForMember(d => d.Category, opt => opt.MapFrom(s => s.Category.ToString()))
+          .ForMember(d => d.VendorName, opt => opt.MapFrom(s => s.Vendor != null ? s.Vendor.Name : null))
+          .ForMember(d => d.LinkedDocumentName, opt => opt.MapFrom(s => s.LinkedDocument != null ? s.LinkedDocument.FileName : null));
     }
   }
 }

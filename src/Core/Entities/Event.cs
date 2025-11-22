@@ -1,4 +1,4 @@
-// src/Core/Entities/Event.cs (FULL FILE)
+// src/Core/Entities/Event.cs
 using CRM_Vivid.Core.Enums;
 using System.Collections.Generic;
 
@@ -10,20 +10,21 @@ namespace CRM_Vivid.Core.Entities
 
     public string Name { get; set; } = string.Empty;
 
-    public EventStatus Status { get; set; } // e.g., "Planned", "Confirmed", "Cancelled"
+    public EventStatus Status { get; set; }
 
     public DateTime StartDateTime { get; set; }
     public DateTime EndDateTime { get; set; }
     public bool IsPublic { get; set; }
 
-    // For storing flexible data, like location, notes, etc. as JSON
     public string? Description { get; set; }
 
-    // Navigation property for the linking table (EventContact)
     public ICollection<EventContact> EventContacts { get; set; } = new List<EventContact>();
 
-    // NEW: Navigation property for the Vendor linking table (EventVendor)
     public ICollection<EventVendor> EventVendors { get; set; } = new List<EventVendor>();
+
+    // --- NEW: The Ledger ---
+    // Navigation property for the Financial Budget (1:0..1)
+    public Budget? Budget { get; set; }
 
     public string? Location { get; set; }
   }

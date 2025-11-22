@@ -16,7 +16,10 @@ public interface IApplicationDbContext
   DbSet<EventVendor> EventVendors { get; }
   DbSet<Template> Templates { get; }
   DbSet<EmailLog> EmailLogs { get; }
-  DbSet<Document> Documents { get; } // Added to fix CS1061
+  DbSet<Document> Documents { get; }
+
+  DbSet<Budget> Budgets { get; }
+  DbSet<Expense> Expenses { get; }
 
   Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

@@ -1,7 +1,7 @@
 services:
   # This is our database service
   postgres_db:
-    image: postgres:16
+    image: postgres:17
     container_name: crm_vivid_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER}

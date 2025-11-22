@@ -101,3 +101,40 @@ export interface Document {
   relatedEntityType: string;
   category: string; // NEW: The Librarian field
 }
+
+export type ExpenseCategory = 
+    | "General" | "Venue" | "Catering" | "Talent" 
+    | "Production" | "Marketing" | "Travel" | "Admin" | "Legal";
+
+export interface Expense {
+    id: string;
+    budgetId: string;
+    description: string;
+    amount: number;
+    dateIncurred: string; // ISO Date
+    category: ExpenseCategory;
+    
+    // Linked Info
+    vendorId?: string;
+    vendorName?: string;
+    linkedDocumentId?: number;
+    linkedDocumentName?: string;
+}
+
+export interface EventFinancials {
+    eventId: string;
+    eventName: string;
+    
+    // Budget Settings
+    budgetTotal: number;
+    currency: string;
+    notes?: string;
+
+    // The Ledger
+    expenses: Expense[];
+
+    // Computed
+    totalSpent: number;
+    remainingBudget: number;
+    burnRate: number; // 0.0 to 1.0
+}
