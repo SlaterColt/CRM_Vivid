@@ -1,10 +1,3 @@
-I've got you. The text you pasted lost all its "Markdown DNA" (the hashtags, backticks, and stars that tell GitHub how to style it).
-
-Here is the **Raw Markdown** code.
-
-**Action:** Open your `README.md` file in VS Code, delete everything currently in it, and paste this code block exactly as is.
-
-````markdown
 # CRM_Vivid
 
 > **The Operating System for LCD Entertainment**
@@ -96,83 +89,87 @@ Do not skip steps. This is the "Run of Show" for adding a new feature:
 
 ---
 
-## 📂 Project Structure
+## 🔐 Secrets & Setup (First Time Run)
 
-```text
-.
-├── frontend_harness/        # React Application
-│   ├── src/types.ts         # The Holy Grail of Types
-│   └── src/components/      # Vertical Slice Components
-├── src/
-│   ├── Api/                 # Entry Point (Controllers, Program.cs)
-│   ├── Application/         # Business Logic (CQRS, Commands, Queries)
-│   ├── Core/                # Domain Entities (Pure C#)
-│   └── Infrastructure/      # Database, File Storage, Email Service
-├── tests/                   # xUnit Test Suite
-└── docker-compose.yml       # Infra Setup
+We practice **Zero Trust**. No secrets are in the repo. You must configure your local environment before the app will boot.
+
+### Step 1: Docker Secrets (Root)
+
+Create a file named `.env` in the **root directory**.
+_(Ask Slater for the `CRM_Vivid_Local` password or set your own)._
+
+```ini
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=YOUR_LOCAL_PASSWORD_HERE
 ```
-````
 
----
+## Step 2: Backend Vault (User Secrets)
 
-## 🚀 Getting Started
+## We use .NET User Secrets to inject credentials. Run these commands in src/Api:
 
-### 0.\ Security & Auth
+dotnet user-secrets init
 
-Run the below in your terminal with the real passwords
+# 1. Database Connection (Must match the password in Step 1)
 
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=CRM_Vivid_Dev;Username=postgres;Password=THE_REAL_PASSWORD"
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" 'Host=localhost;Port=5432;Database=CRM_Vivid_Dev;Username=postgres;Password=YOUR_LOCAL_PASSWORD_HERE'
 
-### 1\. Infrastructure (Docker)
+# 2. SendGrid (Ask Slater/Marc for Key, or generate your own)
 
-Spin up Postgres and Redis:
+dotnet user-secrets set "SendGrid:ApiKey" "SG.YOUR_API_KEY"
 
-```bash
+# Go to Clerk Dashboard -> API Keys -> Publishable Key
+
+## Step 3: Frontend Secrets
+
+Create a file named .env.local in frontend_harness/
+
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
+
+#### 🚀 Launch Sequence
+
+## 1. Start Infrastructure
+
+Spin up Postgres and Redis (Uses your root .env file):
+
 docker-compose up -d
-```
 
-### 2\. Backend (.NET 9)
+# 2. Apply Database Schema
 
-Navigate to the API and run:
+## Ensure your local DB has the latest tables:
 
-```bash
 cd src/Api
+dotnet ef database update
+
+## 3. Run Backend
+
 dotnet run
-```
 
-_Swagger UI:_ `https://localhost:7066/swagger`
+# Swagger UI: https://localhost:7066/swagger
 
-### 3\. Frontend (Vite)
+#### 4. Run Frontend_Harness for Testing
 
 Open a new terminal:
 
-```bash
 cd frontend_harness
 npm install
 npm run dev
-```
 
-_UI:_ `http://localhost:5173`
+# UI: http://localhost:5173
 
----
+#### 🤝 Contribution Workflow
 
-## 🤝 Contribution Workflow
+We use a Vertical Slice assignment model. You own the Feature from Database to CSS.
 
-We use a **Vertical Slice** assignment model. You own the Feature from Database to CSS.
+# 1. Branching:
 
-1.  **Branching:**
-    - `main`: Production Ready (Protected).
-    - `develop`: Integration Branch.
-    - `feature/[your-name]/[feature-name]`: Your workspace.
-2.  **Pull Requests:**
-    - All PRs must be reviewed by the **Lead Architect (Slater)**.
-    - PRs failing _Protocol 7_ (Type Sync) will be rejected.
+## main: Production Ready (Protected).
 
----
+**develop: Integration Branch.**
 
-**System Status:** `PHASE 20 COMPLETE` (The Archivist).
-**Lead Architect:** Slater Colt
+feature/[your-name]/[feature-name]: Your workspace.
 
-```
+# 2. Pull Requests:
 
-```
+## All PRs must be reviewed by the Lead Architect (Slater).
+
+**PRs failing Protocol 7 (Type Sync) will be rejected.**
