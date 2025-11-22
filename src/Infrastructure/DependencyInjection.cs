@@ -1,17 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using CRM_Vivid.Application.Common.Interfaces; // FIXED: Correct namespace for IApplicationDbContext
+using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Infrastructure.Persistence;
 using CRM_Vivid.Infrastructure.Services;
 using Hangfire;
-using Hangfire.Redis.StackExchange; // Ensure Hangfire is referenced if we configure it here, otherwise remove if configured elsewhere.
+using Hangfire.Redis.StackExchange;
 
 namespace CRM_Vivid.Infrastructure;
 
 public static class DependencyInjection
 {
-  // FIXED: Method name changed from 'AddInfrastructure' to 'AddInfrastructureServices' to match Program.cs
   public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
   {
     // 1. Database Configuration
@@ -29,16 +28,19 @@ public static class DependencyInjection
     // 4. Template Merger
     services.AddTransient<ITemplateMerger, TemplateMerger>();
 
-    // 5. Hangfire & Redis Configuration
-    // (Ensuring this is present since Program.cs uses the Dashboard)
+    // 5. PDF Contract Generation (NEW)
+    services.AddTransient<IContractGenerator, ContractGenerator>(); // <-- NEW SERVICE REGISTRATION
+
+    // 6. Hangfire & Redis Configuration (Preserved)
     services.AddHangfire(config => config
         .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
         .UseSimpleAssemblyNameTypeSerializer()
         .UseRecommendedSerializerSettings()
-        .UseRedisStorage(configuration.GetConnectionString("RedisConnection"))); // Ensure "RedisConnection" exists in appsettings, or change to your Redis string.
+        .UseRedisStorage(configuration.GetConnectionString("RedisConnection")));
 
     services.AddHangfireServer();
 
+    // 7. File Storage
     services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
     return services;
