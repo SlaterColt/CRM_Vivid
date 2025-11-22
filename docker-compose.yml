@@ -1,0 +1,24 @@
+services:
+  # This is our database service
+  postgres_db:
+    image: postgres:16
+    container_name: crm_vivid_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - crm_vivid_pgdata:/var/lib/postgresql/data
+
+  # NEW: The caching engine
+  redis_cache:
+    image: redis:alpine
+    container_name: crm_vivid_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  crm_vivid_pgdata:
+    driver: local

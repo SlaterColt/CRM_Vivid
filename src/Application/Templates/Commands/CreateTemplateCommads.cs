@@ -1,0 +1,12 @@
+using CRM_Vivid.Application.Common.Models;
+using MediatR;
+
+namespace CRM_Vivid.Application.Templates.Commands;
+
+public record CreateTemplateCommand : IRequest<Guid>
+{
+  public string Name { get; set; } = string.Empty;
+  public string? Subject { get; set; }
+  public string Content { get; set; } = string.Empty;
+  public string Type { get; set; } = string.Empty;
+}

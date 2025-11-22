@@ -1,0 +1,22 @@
+using CRM_Vivid.Core.Entities;
+using Microsoft.EntityFrameworkCore;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace CRM_Vivid.Application.Common.Interfaces;
+
+public interface IApplicationDbContext
+{
+  DbSet<Contact> Contacts { get; }
+  DbSet<Event> Events { get; }
+  DbSet<EventContact> EventContacts { get; }
+  DbSet<Core.Entities.Task> Tasks { get; }
+  DbSet<Vendor> Vendors { get; }
+  DbSet<Note> Notes { get; }
+  DbSet<EventVendor> EventVendors { get; }
+  DbSet<Template> Templates { get; }
+  DbSet<EmailLog> EmailLogs { get; }
+  DbSet<Document> Documents { get; } // Added to fix CS1061
+
+  Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+}

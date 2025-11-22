@@ -1,0 +1,18 @@
+@CRM_Vivid_HostAddress = http://localhost:5179
+
+### 1. Health Check (Default)
+GET {{CRM_Vivid_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+### 2. Get Documents (Test for The Archivist)
+# Replace the GUID below with a real Event ID from your database to test
+GET {{CRM_Vivid_HostAddress}}/api/documents?relatedEntityId=00000000-0000-0000-0000-000000000000&relatedEntityType=Event
+Accept: application/json
+
+###
+
+### 3. Get All Events
+GET {{CRM_Vivid_HostAddress}}/api/events
+Accept: application/json
