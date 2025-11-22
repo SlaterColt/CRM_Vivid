@@ -34,6 +34,10 @@ namespace CRM_Vivid.Application.Contacts.Commands
 
       RuleFor(x => x.Organization)
           .MaximumLength(200).WithMessage("Organization must not exceed 200 characters.");
+
+      RuleFor(v => v.Stage).IsInEnum().WithMessage("Invalid Lead Stage value.");
+      RuleFor(v => v.ConnectionStatus).IsInEnum().WithMessage("Invalid Connection Status value.");
+      RuleFor(v => v.Source).MaximumLength(100).When(v => v.Source != null);
     }
 
     private async Task<bool> BeUniqueEmail(string email, CancellationToken cancellationToken)

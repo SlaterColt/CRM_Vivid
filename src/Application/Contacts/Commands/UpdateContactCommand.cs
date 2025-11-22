@@ -1,3 +1,4 @@
+using CRM_Vivid.Core.Enum;
 using MediatR;
 
 namespace CRM_Vivid.Application.Contacts.Commands;
@@ -16,4 +17,11 @@ public class UpdateContactCommand : IRequest<Unit>
   public string? PhoneNumber { get; set; }
   public string? Title { get; set; }
   public string? Organization { get; set; }
+
+  public LeadStage Stage { get; init; }
+  public ConnectionStatus ConnectionStatus { get; init; }
+  public string? Source { get; init; }
+
+  // Explicit action to signal a new follow-up (Diara's "1st, 2nd, 3rd follow ups")
+  public bool IncrementFollowUpCount { get; init; } = false;
 }

@@ -1,4 +1,7 @@
 using CRM_Vivid.Application.Common.Interfaces;
+using CRM_Vivid.Application.Exceptions;
+using CRM_Vivid.Core.Entities;
+using CRM_Vivid.Core.Enum;
 using MediatR;
 
 namespace CRM_Vivid.Application.Contacts.Commands;
@@ -19,30 +22,47 @@ public class UpdateContactCommandHandler : IRequestHandler<UpdateContactCommand,
         new object[] { request.Id },
         cancellationToken: cancellationToken);
 
-    // 2. Check if it exists. If not, we're done.
-    // (We can add custom exception handling later if we want)
+    // 2. Add proper Exception Handling
     if (entity == null)
     {
-      // You could throw a NotFoundException here
-      return Unit.Value;
+      throw new NotFoundException(nameof(Contact), request.Id);
     }
 
-    // 3. Map the new values from the request to the entity
+    // 3. Map the standard values
     entity.FirstName = request.FirstName;
     entity.LastName = request.LastName;
     entity.Email = request.Email;
     entity.PhoneNumber = request.PhoneNumber;
     entity.Title = request.Title;
     entity.Organization = request.Organization;
+    entity.UpdatedAt = DateTime.UtcNow; // Ensure timestamp is updated
 
-    // Note: Your entity automatically updates 'UpdatedAt',
-    // but if it didn't, you'd set it here:
-    // entity.UpdatedAt = DateTime.UtcNow;
+    // 4. Map and Process Pipeline Fields (NEW LOGIC)
+    entity.Stage = request.Stage;
+    entity.ConnectionStatus = request.ConnectionStatus;
+    entity.Source = request.Source;
 
-    // 4. Save the changes to the database
+    if (request.IncrementFollowUpCount)
+    {
+      // Diara's "1st, 2nd, 3rd follow ups" tracking
+      entity.FollowUpCount++;
+      entity.LastContactedAt = DateTime.UtcNow;
+    }
+
+    // Handle Lead/Client Transition based on Stage (High-Value Logic)
+    if (request.Stage == LeadStage.Won)
+    {
+      entity.IsLead = false; // Convert from Lead back to Client
+    }
+    else if (request.Stage != LeadStage.Won && entity.Stage == LeadStage.Won)
+    {
+      // If they were 'Won' but are being moved back (e.g., to Negotiating), they are treated as a Lead again.
+      entity.IsLead = true;
+    }
+
+    // 5. Save the changes
     await _context.SaveChangesAsync(cancellationToken);
 
-    // 5. Return the 'Unit' value (void)
     return Unit.Value;
   }
 }
