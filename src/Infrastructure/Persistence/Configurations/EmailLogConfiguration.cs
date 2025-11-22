@@ -25,16 +25,13 @@ namespace CRM_Vivid.Infrastructure.Persistence.Configurations
           .IsRequired();
 
       builder.Property(e => e.ErrorMessage)
-          .IsRequired(false); // Explicitly nullable
+          .IsRequired(false);
 
-      // Optional Relationship with Contact
-      // We don't necessarily want a "EmailLogs" collection on the Contact entity 
-      // clogging up the domain model unless we explicitly ask for it, 
-      // so we configure the relationship from this side.
+      // FIX: Explicitly map relationship to Contact.EmailLogs
       builder.HasOne(e => e.Contact)
-          .WithMany() // One Contact has many EmailLogs, but we haven't added the collection to Contact yet
+          .WithMany(c => c.EmailLogs) // <--- FIX: Pointing to the ICollection on Contact
           .HasForeignKey(e => e.ContactId)
-          .OnDelete(DeleteBehavior.SetNull); // If contact is deleted, keep the log but null the ID
+          .OnDelete(DeleteBehavior.SetNull);
     }
   }
 }

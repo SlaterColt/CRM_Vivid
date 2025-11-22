@@ -138,3 +138,26 @@ export interface EventFinancials {
     remainingBudget: number;
     burnRate: number; // 0.0 to 1.0
 }
+
+export const RecipientType = {
+  Contact: 0,
+  Vendor: 1
+} as const;
+
+export type RecipientType = typeof RecipientType[keyof typeof RecipientType];
+
+export interface SendTemplateEmailCommand {
+  eventId: string;
+  templateId: string;
+  targetEntityId: string;
+  recipientType: RecipientType;
+}
+
+export interface SubmitLeadCommand {
+  firstName: string;
+  lastName?: string;
+  email: string;
+  phoneNumber?: string;
+  organization?: string;
+  source?: string;
+}

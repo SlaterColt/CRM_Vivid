@@ -10,7 +10,13 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
   {
     builder.ToTable("Contacts");
     builder.HasKey(c => c.Id);
+
+    // Critical: Prevent duplicate emails
     builder.HasIndex(c => c.Email).IsUnique();
+
+    // New: Index for Pipeline Performance
+    builder.HasIndex(c => c.IsLead);
+    builder.HasIndex(c => c.Stage);
 
     builder.Property(c => c.FirstName).IsRequired().HasMaxLength(100);
     builder.Property(c => c.LastName).HasMaxLength(100);
@@ -19,6 +25,7 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
     builder.Property(c => c.Title).HasMaxLength(100);
     builder.Property(c => c.Organization).HasMaxLength(100);
 
+    // Preserved PostgreSQL specific timestamp logic
     builder.Property(c => c.CreatedAt)
         .IsRequired()
         .HasDefaultValueSql("now()");

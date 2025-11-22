@@ -1,5 +1,10 @@
 import axios from 'axios';
-import type { Document, EventFinancials } from './types'; // Added EventFinancials
+import type { 
+  Document, 
+  EventFinancials, 
+  SendTemplateEmailCommand,
+  TemplateDto // Added this import
+} from './types';
 
 // Define the base URL of your local API
 const API_BASE_URL = 'http://localhost:5179'; 
@@ -38,7 +43,7 @@ export const deleteDocument = async (id: number): Promise<void> => {
   await apiClient.delete(`/api/documents/${id}`);
 };
 
-// --- NEW: Financials (The Ledger) ---
+// --- Financials (The Ledger) ---
 
 export const getEventFinancials = async (eventId: string): Promise<EventFinancials> => {
   const response = await apiClient.get<EventFinancials>(`/api/events/${eventId}/financials`);
@@ -68,4 +73,21 @@ export const addExpense = async (
   const payload = { eventId, description, amount, dateIncurred, category, vendorId, linkedDocumentId };
   const response = await apiClient.post<string>(`/api/events/${eventId}/financials/expenses`, payload);
   return response.data;
+};
+
+// --- NEW: Templates (The Messenger) ---
+
+export const templates = {
+  getAll: async () => {
+    const response = await apiClient.get<TemplateDto[]>('/api/templates');
+    return response.data;
+  },
+  create: async (data: unknown) => {
+    const response = await apiClient.post<string>('/api/templates', data);
+    return response.data;
+  },
+  sendEmail: async (command: SendTemplateEmailCommand) => {
+    const response = await apiClient.post('/api/templates/send', command);
+    return response.data;
+  }
 };

@@ -1,76 +1,47 @@
-using AutoMapper;
-using CRM_Vivid.Application.Common.Interfaces; // Correct Interface location
+using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Application.Common.Models;
-using CRM_Vivid.Application.Exceptions;
-// using CRM_Vivid.Application.Common.Interfaces; <-- REMOVED (Source of Error)
-using CRM_Vivid.Core.Entities;
-using Hangfire;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Task = System.Threading.Tasks.Task;
+using System.Collections.Generic; // Added
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CRM_Vivid.Application.Automation.Commands;
 
-public class ScheduleEmailCommandHandler : IRequestHandler<ScheduleEmailCommand, Unit>
+public class ScheduleEmailCommandHandler : IRequestHandler<ScheduleEmailCommand, bool>
 {
-  private readonly IApplicationDbContext _context;
   private readonly ITemplateMerger _merger;
-  private readonly IBackgroundJobClient _jobClient;
-  private readonly IMapper _mapper;
+  private readonly IEmailSender _emailSender;
+  private readonly IApplicationDbContext _context;
 
   public ScheduleEmailCommandHandler(
-      IApplicationDbContext context,
       ITemplateMerger merger,
-      IBackgroundJobClient jobClient,
-      IMapper mapper)
+      IEmailSender emailSender,
+      IApplicationDbContext context)
   {
-    _context = context;
     _merger = merger;
-    _jobClient = jobClient;
-    _mapper = mapper;
+    _emailSender = emailSender;
+    _context = context;
   }
 
-  public async Task<Unit> Handle(ScheduleEmailCommand request, CancellationToken cancellationToken)
+  public async Task<bool> Handle(ScheduleEmailCommand request, CancellationToken cancellationToken)
   {
-    // 1. Fetch the Contact
-    var contact = await _context.Contacts
-        .FirstOrDefaultAsync(c => c.Id == request.ContactId, cancellationToken);
+    // NOTE: This is a legacy handler. Ideally, we fetch data here. 
+    // For now, we assume the request has what we need or we construct a basic dictionary.
 
-    if (contact == null)
-    {
-      throw new NotFoundException(nameof(Contact), request.ContactId);
-    }
+    // Create the dictionary for the merger
+    var placeholders = new Dictionary<string, string>
+        {
+            { "FirstName", request.Contact.FirstName ?? "" },
+            { "LastName", request.Contact.LastName ?? "" },
+            { "Organization", request.Contact.Organization ?? "" },
+            { "Title", request.Contact.Title ?? "" },
+            { "ContactName", $"{request.Contact.FirstName} {request.Contact.LastName}" }
+        };
 
-    // 2. Fetch the Template
-    var template = await _context.Templates
-        .FirstOrDefaultAsync(t => t.Id == request.TemplateId, cancellationToken);
+    var mergedBody = _merger.Merge(request.TemplateContent, placeholders);
 
-    if (template == null)
-    {
-      throw new NotFoundException(nameof(Template), request.TemplateId);
-    }
+    await _emailSender.SendEmailAsync(request.Contact.Email, request.Subject, mergedBody);
 
-    // 3. Map & Merge
-    var contactDto = _mapper.Map<ContactDto>(contact);
-    var mergedBody = _merger.Merge(template.Content, contactDto);
-    var subject = template.Name;
-
-    // 4. Schedule via Hangfire
-    // Note: We pass the ContactId to the sender in the next step so we can log it!
-    if (request.SendAt.HasValue && request.SendAt.Value > DateTime.UtcNow)
-    {
-      _jobClient.Schedule<IEmailSender>(
-          sender => sender.SendEmailAsync(contact.Email, subject, mergedBody),
-          request.SendAt.Value
-      );
-    }
-    else
-    {
-      _jobClient.Enqueue<IEmailSender>(
-          sender => sender.SendEmailAsync(contact.Email, subject, mergedBody)
-      );
-    }
-
-    return Unit.Value;
+    return true;
   }
 }

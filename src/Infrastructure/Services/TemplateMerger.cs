@@ -1,31 +1,31 @@
 using CRM_Vivid.Application.Common.Interfaces;
-using CRM_Vivid.Application.Common.Models;
+using System.Collections.Generic;
 using System.Text;
 
 namespace CRM_Vivid.Infrastructure.Services;
 
 public class TemplateMerger : ITemplateMerger
 {
-  public string Merge(string templateContent, ContactDto contact)
+  public string Merge(string templateContent, Dictionary<string, string> placeholders)
   {
-    if (string.IsNullOrWhiteSpace(templateContent))
+    if (string.IsNullOrWhiteSpace(templateContent) || placeholders == null || placeholders.Count == 0)
     {
-      return string.Empty;
+      return templateContent ?? string.Empty;
     }
 
     var sb = new StringBuilder(templateContent);
 
-    // 1. Support Single Braces (e.g., {FirstName}) - This is what you used
-    sb.Replace("{FirstName}", contact.FirstName ?? string.Empty);
-    sb.Replace("{LastName}", contact.LastName ?? string.Empty);
-    sb.Replace("{Organization}", contact.Organization ?? string.Empty);
-    sb.Replace("{Title}", contact.Title ?? string.Empty);
+    foreach (var kvp in placeholders)
+    {
+      var key = kvp.Key;
+      var value = kvp.Value ?? string.Empty;
 
-    // 2. Support Double Braces (e.g., {{FirstName}}) - Just in case
-    sb.Replace("{{FirstName}}", contact.FirstName ?? string.Empty);
-    sb.Replace("{{LastName}}", contact.LastName ?? string.Empty);
-    sb.Replace("{{Organization}}", contact.Organization ?? string.Empty);
-    sb.Replace("{{Title}}", contact.Title ?? string.Empty);
+      // Support {{Key}} (Standard Mustache/Handlebars style)
+      sb.Replace($"{{{{{key}}}}}", value);
+
+      // Support {Key} (Legacy style)
+      sb.Replace($"{{{key}}}", value);
+    }
 
     return sb.ToString();
   }

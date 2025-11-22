@@ -1,13 +1,16 @@
-using CRM_Vivid.Application.Common.Models;
 using CRM_Vivid.Application.Templates.Commands;
 using CRM_Vivid.Application.Templates.Queries;
-using MediatR;
+using CRM_Vivid.Application.Common.Models;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
 
 namespace CRM_Vivid.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
+[ApiController]
 public class TemplatesController : ControllerBase
 {
   private readonly ISender _sender;
@@ -44,6 +47,7 @@ public class TemplatesController : ControllerBase
     }
 
     await _sender.Send(command);
+
     return NoContent();
   }
 
@@ -52,5 +56,13 @@ public class TemplatesController : ControllerBase
   {
     await _sender.Send(new DeleteTemplateCommand(id));
     return NoContent();
+  }
+
+  // --- NEW ENDPOINT ---
+  [HttpPost("send")]
+  public async Task<ActionResult> SendTemplate(SendTemplateEmailCommand command)
+  {
+    await _sender.Send(command);
+    return Ok();
   }
 }

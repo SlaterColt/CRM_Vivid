@@ -1,82 +1,85 @@
-using CRM_Vivid.Application.Common.Models;
 using CRM_Vivid.Infrastructure.Services;
 using FluentAssertions;
+using System.Collections.Generic;
 using Xunit;
 
 namespace CRM_Vivid.Infrastructure.UnitTests.Services;
 
 public class TemplateMergerTests
 {
-  private readonly TemplateMerger _sut; // System Under Test
+  private readonly TemplateMerger _merger;
 
   public TemplateMergerTests()
   {
-    _sut = new TemplateMerger();
+    _merger = new TemplateMerger();
   }
 
   [Fact]
-  public void Merge_ShouldReplaceTags_WhenContactHasData()
+  public void Merge_ShouldReplaceSingleBraces_WhenKeysExist()
   {
     // Arrange
-    var template = "Hello {{FirstName}} {{LastName}} from {{Organization}}.";
-    var contact = new ContactDto
-    {
-      FirstName = "Slater",
-      LastName = "Colt",
-      Organization = "LCD Entertainment"
-    };
+    var template = "Hello {FirstName}, welcome to {Organization}.";
+    var placeholders = new Dictionary<string, string>
+        {
+            { "FirstName", "Slater" },
+            { "Organization", "LCD" }
+        };
 
     // Act
-    var result = _sut.Merge(template, contact);
+    var result = _merger.Merge(template, placeholders);
 
     // Assert
-    result.Should().Be("Hello Slater Colt from LCD Entertainment.");
+    result.Should().Be("Hello Slater, welcome to LCD.");
   }
 
   [Fact]
-  public void Merge_ShouldReplaceTagsWithEmptyString_WhenContactDataIsNull()
+  public void Merge_ShouldReplaceDoubleBraces_WhenKeysExist()
   {
     // Arrange
-    var template = "Hi {{FirstName}}, welcome to {{Organization}}.";
-
-    // FIX: Using null! to intentionally force null for robustness testing
-    var contact = new ContactDto
-    {
-      FirstName = null!,
-      Organization = null!
-    };
+    var template = "Hello {{FirstName}}.";
+    var placeholders = new Dictionary<string, string>
+        {
+            { "FirstName", "Slater" }
+        };
 
     // Act
-    var result = _sut.Merge(template, contact);
+    var result = _merger.Merge(template, placeholders);
 
     // Assert
-    result.Should().Be("Hi , welcome to .");
+    result.Should().Be("Hello Slater.");
   }
 
   [Fact]
-  public void Merge_ShouldReturnEmpty_WhenTemplateIsEmpty()
+  public void Merge_ShouldIgnoreMissingKeys()
   {
     // Arrange
-    var contact = new ContactDto { FirstName = "Test" };
+    var template = "Hello {UnknownKey}.";
+    var placeholders = new Dictionary<string, string>
+        {
+            { "FirstName", "Slater" }
+        };
 
     // Act
-    var result = _sut.Merge(string.Empty, contact);
+    var result = _merger.Merge(template, placeholders);
 
     // Assert
-    result.Should().Be(string.Empty);
+    result.Should().Be("Hello {UnknownKey}.");
   }
 
   [Fact]
-  public void Merge_ShouldHandleTemplateWithNoTags()
+  public void Merge_ShouldHandleNullValuesGracefully()
   {
     // Arrange
-    var template = "Just a plain text.";
-    var contact = new ContactDto { FirstName = "Slater" };
+    var template = "Hello {FirstName}.";
+    var placeholders = new Dictionary<string, string>
+        {
+            { "FirstName", string.Empty }
+        };
 
     // Act
-    var result = _sut.Merge(template, contact);
+    var result = _merger.Merge(template, placeholders);
 
     // Assert
-    result.Should().Be("Just a plain text.");
+    result.Should().Be("Hello .");
   }
 }
