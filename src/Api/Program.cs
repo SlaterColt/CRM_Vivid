@@ -86,6 +86,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    builder.Configuration.AddUserSecrets<Program>();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
@@ -100,8 +101,8 @@ app.UseCors(_myAllowSpecificOrigins);
 app.UseStaticFiles();
 // ------------------------------------------------------------
 
-app.UseAuthentication();
-app.UseAuthorization();
+// app.UseAuthentication();
+// app.UseAuthorization();
 
 // The Hangfire Dashboard
 app.UseHangfireDashboard("/hangfire");

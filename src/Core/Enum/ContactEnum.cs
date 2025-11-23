@@ -25,3 +25,9 @@ public enum LeadStage
   Won = 4,             // Confirmed Client
   Lost = 5             // Dead lead
 }
+
+public enum CommunicationType
+{
+  Email = 0,
+  Sms = 1
+}

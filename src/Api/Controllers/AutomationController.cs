@@ -1,9 +1,9 @@
 using CRM_Vivid.Application.Automation.Commands;
 using CRM_Vivid.Application.Common.Interfaces;
-using Hangfire;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization; // Assuming authorization is intended for internal use
 
 namespace CRM_Vivid.Api.Controllers;
 
@@ -11,30 +11,28 @@ namespace CRM_Vivid.Api.Controllers;
 [ApiController]
 public class AutomationController : ControllerBase
 {
-  private readonly IBackgroundJobClient _jobClient;
-  private readonly IEmailSender _emailSender;
   private readonly ISender _sender;
 
-  public AutomationController(IBackgroundJobClient jobClient, IEmailSender emailSender, ISender sender)
+  public AutomationController(ISender sender)
   {
-    _jobClient = jobClient;
-    _emailSender = emailSender;
     _sender = sender;
   }
 
-  [HttpPost("test-email")]
-  public IActionResult SendTestEmail([FromQuery] string email)
-  {
-    // Fire-and-forget job
-    var jobId = _jobClient.Enqueue(() => _emailSender.SendEmailAsync(email, "Proof of Life", "The Automation Engine is Online."));
+  // NOTE: SendTestEmail and ScheduleEmail logic has been removed/refactored
+  // to avoid exposing IBackgroundJobClient directly and centralize scheduling via ISender.
 
-    return Ok(new { Message = "Email job enqueued", JobId = jobId });
+  [HttpPost("schedule-followup")]
+  [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  public async Task<IActionResult> ScheduleFollowUp([FromBody] ScheduleFollowUpCommand command)
+  {
+    // The command handler validates the time/IDs and queues the job via Hangfire.
+    var jobId = await _sender.Send(command);
+
+    return Ok(new { Message = "Follow-up job scheduled successfully.", JobId = jobId });
   }
 
-  [HttpPost("schedule-email")]
-  public async Task<IActionResult> ScheduleEmail([FromBody] ScheduleEmailCommand command)
-  {
-    await _sender.Send(command);
-    return Ok(new { Message = "Email scheduled successfully." });
-  }
+  // Placeholder for future general automation actions
+  // [HttpPost("trigger-workflow")]
+  // public IActionResult TriggerWorkflow(...) { ... }
 }

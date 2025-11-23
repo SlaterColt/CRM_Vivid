@@ -22,14 +22,16 @@ public static class DependencyInjection
     // 2. Bind the Interface to the Concrete Context
     services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
-    // 3. Email Service (SendGrid)
+    // 3. Communication Services
     services.AddTransient<IEmailSender, SendGridEmailSender>();
+    // Note: ITelephonyService registration is deferred for now.
 
-    // 4. Template Merger
+    // 4. Core Services
     services.AddTransient<ITemplateMerger, TemplateMerger>();
+    services.AddTransient<IContractGenerator, ContractGenerator>();
 
-    // 5. PDF Contract Generation (NEW)
-    services.AddTransient<IContractGenerator, ContractGenerator>(); // <-- NEW SERVICE REGISTRATION
+    // 5. Background Job Processing (FIX: Using fully qualified name to force resolution)
+    services.AddTransient<IBackgroundJobService, Services.HangfireJobService>();
 
     // 6. Hangfire & Redis Configuration (Preserved)
     services.AddHangfire(config => config
