@@ -1,5 +1,3 @@
-using System;
-
 namespace CRM_Vivid.Application.Common.Models
 {
   public class EmailLogDto

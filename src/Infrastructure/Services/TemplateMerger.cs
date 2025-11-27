@@ -1,5 +1,4 @@
 using CRM_Vivid.Application.Common.Interfaces;
-using System.Collections.Generic;
 using System.Text;
 
 namespace CRM_Vivid.Infrastructure.Services;

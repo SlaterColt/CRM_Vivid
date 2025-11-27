@@ -3,7 +3,6 @@ using CRM_Vivid.Application.Common.Models;
 using CRM_Vivid.Application.Exceptions;
 using CRM_Vivid.Application.Common.Interfaces;
 using MediatR;
-using Task = System.Threading.Tasks.Task; // Alias for System Task
 
 namespace CRM_Vivid.Application.Templates.Queries;
 

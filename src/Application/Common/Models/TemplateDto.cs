@@ -1,5 +1,3 @@
-using CRM_Vivid.Core.Enum;
-
 namespace CRM_Vivid.Application.Common.Models;
 
 public class TemplateDto

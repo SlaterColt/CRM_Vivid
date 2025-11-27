@@ -2,8 +2,6 @@ using CRM_Vivid.Application.Contacts.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Threading.Tasks;
 
 namespace CRM_Vivid.Api.Controllers;
 
@@ -19,6 +17,11 @@ public class LeadsController : ControllerBase
     _sender = sender;
   }
 
+  /// <summary>
+  /// Public endpoint for external systems to submit new leads.
+  /// Requires no authentication.
+  /// POST /api/leads/submit
+  /// </summary>
   [HttpPost("submit")]
   [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
   [ProducesResponseType(StatusCodes.Status400BadRequest)]

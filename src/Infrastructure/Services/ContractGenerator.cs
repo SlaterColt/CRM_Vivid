@@ -3,16 +3,10 @@ using CRM_Vivid.Core.Entities;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using System;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 
 // --- Entity Aliases ---
 using Document = QuestPDF.Fluent.Document;
-using ContactEntity = CRM_Vivid.Core.Entities.Contact;
-using DocumentEntity = CRM_Vivid.Core.Entities.Document;
-using TaskEntity = CRM_Vivid.Core.Entities.Task;
 
 namespace CRM_Vivid.Infrastructure.Services;
 

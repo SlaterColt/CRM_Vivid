@@ -1,7 +1,6 @@
 using CRM_Vivid.Application.Automation.Commands;
 using CRM_Vivid.Application.Common.Models;
 using FluentValidation.TestHelper;
-using System;
 using Xunit;
 
 namespace CRM_Vivid.Application.UnitTests.Automation.Commands;

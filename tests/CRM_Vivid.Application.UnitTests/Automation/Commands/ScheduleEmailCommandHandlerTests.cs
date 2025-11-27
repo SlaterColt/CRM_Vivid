@@ -3,9 +3,6 @@ using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Application.Common.Models;
 using Moq;
 using Xunit;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic; // Added
 
 namespace CRM_Vivid.Application.UnitTests.Automation.Commands;
 

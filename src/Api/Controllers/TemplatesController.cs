@@ -3,9 +3,6 @@ using CRM_Vivid.Application.Templates.Queries;
 using CRM_Vivid.Application.Common.Models;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System;
 
 namespace CRM_Vivid.Api.Controllers;
 

@@ -1,5 +1,4 @@
 using FluentValidation;
-using System;
 
 namespace CRM_Vivid.Application.Automation.Commands;
 

@@ -2,15 +2,9 @@ using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Core.Enum;
 using MediatR;
 using FluentValidation;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Linq.Expressions;
 using CRM_Vivid.Application.Exceptions;
-using Microsoft.EntityFrameworkCore;
 using CRM_Vivid.Core.Entities; // <-- FIX 1: ADDED MISSING ENTITY REFERENCE
-using System.Collections.Generic; // Added for Dictionary
-using System.Linq; // Added for Linq
 
 namespace CRM_Vivid.Application.Automation.Commands;
 

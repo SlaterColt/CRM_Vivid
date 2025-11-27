@@ -1,6 +1,4 @@
 // src/Core/Entities/EventVendor.cs
-using System;
-
 namespace CRM_Vivid.Core.Entities
 {
   public class EventVendor

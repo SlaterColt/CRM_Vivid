@@ -1,6 +1,4 @@
-using CRM_Vivid.Core.Enum;
 using FluentValidation;
-using System;
 
 namespace CRM_Vivid.Application.Contacts.Commands;
 

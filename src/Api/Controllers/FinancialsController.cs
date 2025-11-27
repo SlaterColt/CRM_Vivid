@@ -2,8 +2,6 @@ using CRM_Vivid.Application.Common.Models;
 using CRM_Vivid.Application.Financials.Commands;
 using CRM_Vivid.Application.Financials.Queries;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Threading.Tasks;
 
 namespace CRM_Vivid.Api.Controllers
 {

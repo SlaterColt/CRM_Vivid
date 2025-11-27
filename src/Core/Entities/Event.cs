@@ -1,6 +1,5 @@
 // src/Core/Entities/Event.cs
 using CRM_Vivid.Core.Enums;
-using System.Collections.Generic;
 
 namespace CRM_Vivid.Core.Entities
 {

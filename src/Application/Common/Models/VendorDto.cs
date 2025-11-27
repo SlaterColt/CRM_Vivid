@@ -1,6 +1,3 @@
-using CRM_Vivid.Core.Enum;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-
 namespace CRM_Vivid.Application.Common.Models;
 
 public class VendorDto

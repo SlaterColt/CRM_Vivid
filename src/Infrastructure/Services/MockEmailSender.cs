@@ -1,6 +1,5 @@
 using CRM_Vivid.Application.Common.Interfaces;
 using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
 
 namespace CRM_Vivid.Infrastructure.Services;
 

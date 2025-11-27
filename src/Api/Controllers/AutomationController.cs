@@ -1,9 +1,6 @@
 using CRM_Vivid.Application.Automation.Commands;
-using CRM_Vivid.Application.Common.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization; // Assuming authorization is intended for internal use
 
 namespace CRM_Vivid.Api.Controllers;
 

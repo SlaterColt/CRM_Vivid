@@ -1,14 +1,8 @@
 using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Application.Exceptions; // Fixed Namespace
-using CRM_Vivid.Core.Enum;
-using CRM_Vivid.Core.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentValidation;
-using System;
 
 namespace CRM_Vivid.Application.Templates.Commands;
 

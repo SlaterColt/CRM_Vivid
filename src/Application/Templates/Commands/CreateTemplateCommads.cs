@@ -1,4 +1,3 @@
-using CRM_Vivid.Application.Common.Models;
 using MediatR;
 
 namespace CRM_Vivid.Application.Templates.Commands;

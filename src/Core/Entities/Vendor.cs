@@ -1,6 +1,5 @@
 // src/Core/Entities/Vendor.cs (FULL FILE)
 using CRM_Vivid.Core.Enum;
-using System.Collections.Generic;
 
 namespace CRM_Vivid.Core.Entities;
 

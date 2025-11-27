@@ -1,27 +1,35 @@
 using CRM_Vivid.Infrastructure;
 using CRM_Vivid.Application;
-using FluentValidation.AspNetCore;
 using CRM_Vivid.Api.Middleware;
-using Clerk.Net.AspNetCore.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using Hangfire;
+using Microsoft.IdentityModel.Logging;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var _myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ADDED: Enable PII Logging for debugging (Development only)
+if (builder.Environment.IsDevelopment())
+{
+    IdentityModelEventSource.ShowPII = true;
+}
+
+// 1. CORS Configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: _myAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins("http://localhost:5179", // Your Swagger UI
-                                             "http://localhost:3000", // Your future frontend
+                          policy.WithOrigins("http://localhost:5179",
+                                             "http://localhost:3000",
                                              "http://localhost:5173")
                                 .AllowAnyHeader()
-                                .AllowAnyMethod();
+                                .AllowAnyMethod()
+                                .AllowCredentials();
                       });
 });
 
@@ -29,16 +37,30 @@ builder.Services.AddCors(options =>
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-builder.Services.AddAuthentication(ClerkAuthenticationDefaults.AuthenticationScheme)
-    .AddClerkAuthentication(options =>
+// FIX: Switching to standard AddJwtBearer for reliable JWT validation
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        options.Authority = builder.Configuration["Clerk:Authority"]!;
-        options.AuthorizedParty = builder.Configuration["Clerk:AuthorizedParty"]!;
+        // Authority (Issuer) tells the middleware where to fetch the public keys (JWKS endpoint)
+        options.Authority = builder.Configuration["Clerk:Authority"];
 
-        if (string.IsNullOrEmpty(options.Authority))
-            throw new InvalidOperationException("Clerk:Authority is not configured.");
-        if (string.IsNullOrEmpty(options.AuthorizedParty))
-            throw new InvalidOperationException("Clerk:AuthorizedParty is not configured.");
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = false, // Set to true if you define the Audience (Aud) claim
+            ValidateLifetime = true,
+            // The Authority URL automatically resolves the Issuer Signing Key via the JWKS endpoint
+        };
+
+        // OPTIONAL: Event handlers for debugging validation failures
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"Token Validation Failed: {context.Exception.Message}");
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorizationBuilder()
@@ -101,8 +123,9 @@ app.UseCors(_myAllowSpecificOrigins);
 app.UseStaticFiles();
 // ------------------------------------------------------------
 
-// app.UseAuthentication();
-// app.UseAuthorization();
+// Middleware MUST be in this order: Authentication THEN Authorization
+app.UseAuthentication();
+app.UseAuthorization();
 
 // The Hangfire Dashboard
 app.UseHangfireDashboard("/hangfire");

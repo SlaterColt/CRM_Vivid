@@ -1,12 +1,10 @@
 // src/Application/Contacts/Queries/GetEventsForContactQueryHandler.cs (FINAL CORRECTED VERSION)
 
 using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Application.Common.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic; // Ensure this is available if needed
 
 namespace CRM_Vivid.Application.Contacts.Queries;
 

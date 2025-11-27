@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace CRM_Vivid.Application.Common.Interfaces;
 
 public interface ITemplateMerger

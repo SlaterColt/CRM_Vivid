@@ -1,6 +1,3 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
 using CRM_Vivid.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 

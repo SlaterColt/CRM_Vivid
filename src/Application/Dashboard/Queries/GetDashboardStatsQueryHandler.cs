@@ -4,10 +4,6 @@ using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Application.Common.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace CRM_Vivid.Application.Dashboard.Queries;
 

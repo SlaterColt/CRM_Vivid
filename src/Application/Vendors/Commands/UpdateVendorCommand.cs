@@ -1,4 +1,3 @@
-using CRM_Vivid.Core.Enum;
 using MediatR;
 
 namespace CRM_Vivid.Application.Vendors.Commands;

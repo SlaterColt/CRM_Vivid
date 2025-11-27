@@ -1,4 +1,3 @@
-using System.Threading;
 using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Application.Exceptions; // Corrected Namespace
 using CRM_Vivid.Core.Entities;

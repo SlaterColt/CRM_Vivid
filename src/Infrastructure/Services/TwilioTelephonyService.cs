@@ -3,8 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
-using System.Threading.Tasks;
-using System;
 
 namespace CRM_Vivid.Infrastructure.Services;
 

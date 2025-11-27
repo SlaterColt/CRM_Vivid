@@ -2,7 +2,6 @@ using CRM_Vivid.Application.Common.Models;
 using CRM_Vivid.Application.Dashboard.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace CRM_Vivid.Api.Controllers;
 

@@ -1,6 +1,4 @@
 using CRM_Vivid.Core.Enum; // Uses the new file
-using System;
-using System.Collections.Generic;
 
 namespace CRM_Vivid.Core.Entities;
 

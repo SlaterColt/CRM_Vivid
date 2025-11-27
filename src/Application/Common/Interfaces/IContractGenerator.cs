@@ -1,6 +1,3 @@
-using System;
-using System.Threading.Tasks;
-
 namespace CRM_Vivid.Application.Common.Interfaces;
 
 public interface IContractGenerator

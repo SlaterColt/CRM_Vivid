@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using CRM_Vivid.Application.Common.Models;
 using CRM_Vivid.Application.Documents.Commands;
 using CRM_Vivid.Application.Documents.Queries;
 using CRM_Vivid.Application.Exceptions; // Needed for NotFoundException
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CRM_Vivid.Api.Controllers;

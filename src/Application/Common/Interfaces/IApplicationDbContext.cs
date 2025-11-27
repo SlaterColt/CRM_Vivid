@@ -1,7 +1,5 @@
 using CRM_Vivid.Core.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace CRM_Vivid.Application.Common.Interfaces;
 

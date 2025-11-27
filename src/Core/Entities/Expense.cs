@@ -1,5 +1,4 @@
 using CRM_Vivid.Core.Enum;
-using System;
 
 namespace CRM_Vivid.Core.Entities
 {

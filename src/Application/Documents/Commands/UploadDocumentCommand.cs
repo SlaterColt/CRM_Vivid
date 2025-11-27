@@ -1,7 +1,3 @@
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using AutoMapper;
 using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Application.Common.Models;

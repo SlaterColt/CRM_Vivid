@@ -1,6 +1,5 @@
 using CRM_Vivid.Application.Common.Interfaces;
 using Hangfire;
-using System;
 using System.Linq.Expressions;
 
 namespace CRM_Vivid.Infrastructure.Services;

@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Application.Common.Models;
 using MediatR;

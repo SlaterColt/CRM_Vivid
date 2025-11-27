@@ -2,11 +2,6 @@
 using CRM_Vivid.Application.Common.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
-using CRM_Vivid.Application.Exceptions;
-using CRM_Vivid.Core.Entities;
 
 namespace CRM_Vivid.Application.Events.Commands
 {

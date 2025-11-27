@@ -1,6 +1,3 @@
-using System;
-using CRM_Vivid.Core.Entities;
-
 namespace CRM_Vivid.Application.Common.Models;
 
 public class DocumentDto

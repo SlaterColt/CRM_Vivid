@@ -1,7 +1,6 @@
 using CRM_Vivid.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using CRM_Vivid.Application.Common.Interfaces;
-using CRM_Vivid.Infrastructure.Persistence.Configurations;
 
 namespace CRM_Vivid.Infrastructure.Persistence;
 

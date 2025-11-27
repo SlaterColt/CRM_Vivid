@@ -5,8 +5,6 @@ using CRM_Vivid.Application.Tasks.Commands;
 using CRM_Vivid.Application.Vendors.Commands;
 using CRM_Vivid.Core.Enum;
 using CRM_Vivid.Application.Notes.Commands;
-using CRM_Vivid.Application.Templates.Commands;
-using System;
 
 namespace CRM_Vivid.Application.Common.Mappings
 {

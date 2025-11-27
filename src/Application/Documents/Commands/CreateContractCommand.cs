@@ -2,9 +2,6 @@ using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Application.Exceptions;
 using MediatR;
 using FluentValidation;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using CRM_Vivid.Core.Entities; // Required for AnyAsync
 

@@ -1,5 +1,3 @@
-using AutoMapper;
-
 namespace CRM_Vivid.Application.Common.Models
 {
   public class TaskDto

@@ -1,6 +1,5 @@
 // src/Application/Events/Commands/DeleteVendorFromEventCommand.cs
 using MediatR;
-using System;
 
 namespace CRM_Vivid.Application.Events.Commands
 {

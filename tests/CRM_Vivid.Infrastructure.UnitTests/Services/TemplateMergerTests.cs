@@ -1,6 +1,5 @@
 using CRM_Vivid.Infrastructure.Services;
 using FluentAssertions;
-using System.Collections.Generic;
 using Xunit;
 
 namespace CRM_Vivid.Infrastructure.UnitTests.Services;

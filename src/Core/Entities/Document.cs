@@ -1,9 +1,7 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 // Protocol 10: The Task Alias
-using Task = System.Threading.Tasks.Task;
 
 namespace CRM_Vivid.Core.Entities
 {

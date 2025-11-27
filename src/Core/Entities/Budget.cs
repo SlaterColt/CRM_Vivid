@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace CRM_Vivid.Core.Entities
 {
   public class Budget

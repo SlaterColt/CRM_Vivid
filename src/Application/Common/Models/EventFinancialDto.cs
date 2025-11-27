@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace CRM_Vivid.Application.Common.Models
 {
   public class EventFinancialsDto
