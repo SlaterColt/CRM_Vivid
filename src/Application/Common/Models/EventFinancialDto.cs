@@ -10,6 +10,9 @@ namespace CRM_Vivid.Application.Common.Models
     public string Currency { get; set; } = "USD";
     public string? Notes { get; set; }
 
+    // --- PHASE 26 ADDITION: Budget Lock Status ---
+    public bool IsLocked { get; set; } = false; // NEW
+
     // The Ledger
     public List<ExpenseDto> Expenses { get; set; } = new List<ExpenseDto>();
 

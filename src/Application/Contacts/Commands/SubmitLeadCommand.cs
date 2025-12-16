@@ -1,8 +1,10 @@
+// FILE: src/Application/Contacts/Commands/SubmitLeadCommand.cs (MODIFIED)
+
 using CRM_Vivid.Core.Entities;
 using CRM_Vivid.Core.Enum;
 using MediatR;
 using FluentValidation;
-using CRM_Vivid.Application.Common.Interfaces;
+using CRM_Vivid.Application.Common.Interfaces; // ADDED
 
 namespace CRM_Vivid.Application.Contacts.Commands;
 
@@ -30,10 +32,12 @@ public class SubmitLeadCommandValidator : AbstractValidator<SubmitLeadCommand>
 public class SubmitLeadCommandHandler : IRequestHandler<SubmitLeadCommand, Guid>
 {
   private readonly IApplicationDbContext _context;
+  private readonly ICurrentUserService _currentUserService; // ADDED
 
-  public SubmitLeadCommandHandler(IApplicationDbContext context)
+  public SubmitLeadCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService) // MODIFIED
   {
     _context = context;
+    _currentUserService = currentUserService; // ADDED
   }
 
   public async Task<Guid> Handle(SubmitLeadCommand request, CancellationToken cancellationToken)
@@ -51,6 +55,11 @@ public class SubmitLeadCommandHandler : IRequestHandler<SubmitLeadCommand, Guid>
       IsLead = true,
       Stage = LeadStage.NewLead,
       ConnectionStatus = ConnectionStatus.NeedToMeet, // New leads need introduction
+
+      // --- PHASE 41 FIX: ASSIGN OWNER ID ---
+      CreatedByUserId = _currentUserService.CurrentUserId,
+      // ------------------------------------
+
       CreatedAt = DateTime.UtcNow,
       UpdatedAt = DateTime.UtcNow
     };

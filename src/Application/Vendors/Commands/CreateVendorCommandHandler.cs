@@ -9,16 +9,21 @@ public class CreateVendorCommandHandler : IRequestHandler<CreateVendorCommand, G
 {
   private readonly IApplicationDbContext _context;
   private readonly IMapper _mapper;
+  private readonly ICurrentUserService _currentUserService;
 
-  public CreateVendorCommandHandler(IApplicationDbContext context, IMapper mapper)
+  public CreateVendorCommandHandler(IApplicationDbContext context, IMapper mapper, ICurrentUserService currentUserService)
   {
     _context = context;
     _mapper = mapper;
+    _currentUserService = currentUserService;
   }
 
   public async Task<Guid> Handle(CreateVendorCommand request, CancellationToken cancellationToken)
   {
     var vendor = _mapper.Map<Vendor>(request);
+
+    // --- PHASE 37: ASSIGN OWNER ---
+    vendor.CreatedByUserId = _currentUserService.CurrentUserId;
 
     _context.Vendors.Add(vendor);
     await _context.SaveChangesAsync(cancellationToken);

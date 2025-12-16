@@ -1,13 +1,23 @@
+// FILE: frontend_harness/src/apiClient.ts (COMPLETE REPLACEMENT)
 import axios from 'axios';
-import type { 
-  Document, 
-  EventFinancials, 
-  SendTemplateEmailCommand,
-  TemplateDto // Added this import
+import { 
+  type Document, 
+  type EventFinancials, 
+  type SendTemplateEmailCommand,
+  type TemplateDto, 
+  type ContactDto,
+  type VendorDto,
+  type EventDto,
+  type TaskDto,
+  type NoteDto,
+  type EmailLogDto,
+  type SubmitLeadCommand,
+  RecipientType,
 } from './types';
 
+
 // Define the base URL of your local API
-const API_BASE_URL = 'http://localhost:5179'; 
+const API_BASE_URL = 'http://localhost:5179';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -16,7 +26,12 @@ export const apiClient = axios.create({
   },
 });
 
-// Updated Upload Function with Category
+// =======================================================
+// CORE SERVICES
+// =======================================================
+
+// --- DOCUMENT SERVICES ---
+
 export const uploadDocument = async (
   file: File, 
   relatedEntityId: string, 
@@ -34,16 +49,14 @@ export const uploadDocument = async (
       'Content-Type': 'multipart/form-data',
     },
   });
-
   return response.data;
 };
 
-// The Shredder Function
 export const deleteDocument = async (id: number): Promise<void> => {
   await apiClient.delete(`/api/documents/${id}`);
 };
 
-// --- Financials (The Ledger) ---
+// --- FINANCIALS SERVICES ---
 
 export const getEventFinancials = async (eventId: string): Promise<EventFinancials> => {
   const response = await apiClient.get<EventFinancials>(`/api/events/${eventId}/financials`);
@@ -75,7 +88,8 @@ export const addExpense = async (
   return response.data;
 };
 
-// --- NEW: Templates (The Messenger) ---
+
+// --- TEMPLATE SERVICES ---
 
 export const templates = {
   getAll: async () => {
@@ -87,7 +101,102 @@ export const templates = {
     return response.data;
   },
   sendEmail: async (command: SendTemplateEmailCommand) => {
-    const response = await apiClient.post('/api/templates/send', command);
-    return response.data;
+    // Uses POST /api/templates/send
+    await apiClient.post('/api/templates/send', command);
   }
+};
+
+/**
+ * Initializes required contacts, vendors, and events for testing.
+ * @returns The ID of the primary contact created.
+ */
+export const initializeTestFixtures = async (): Promise<string> => {
+  const response = await apiClient.post<string>('/api/contacts/init-fixtures');
+  return response.data;
+};
+
+// =======================================================
+// FULL CRUD IMPLEMENTATION (PHASE 31)
+// =======================================================
+
+// --- CONTACTS CRUD & RELATIONS ---
+
+export const updateContact = async (id: string, data: Partial<ContactDto>): Promise<void> => {
+  await apiClient.put(`/api/contacts/${id}`, data);
+};
+
+export const deleteContact = async (id: string): Promise<void> => {
+  await apiClient.delete(`/api/contacts/${id}`);
+};
+
+export const getContactEmailLogs = async (contactId: string): Promise<EmailLogDto[]> => {
+  const response = await apiClient.get<EmailLogDto[]>(`/api/contacts/${contactId}/email-logs`);
+  return response.data;
+};
+
+// --- EVENTS CRUD & RELATIONS ---
+
+export const updateEvent = async (id: string, data: Partial<EventDto>): Promise<void> => {
+  await apiClient.put(`/api/events/${id}`, data);
+};
+
+export const deleteEvent = async (id: string): Promise<void> => {
+  await apiClient.delete(`/api/events/${id}`);
+};
+
+export const unlinkContactFromEvent = async (eventId: string, contactId: string): Promise<void> => {
+  await apiClient.delete(`/api/events/${eventId}/contacts/${contactId}`);
+};
+
+
+// --- VENDORS CRUD ---
+
+export const updateVendor = async (id: string, data: Partial<VendorDto>): Promise<void> => {
+  await apiClient.put(`/api/vendors/${id}`, data);
+};
+
+export const deleteVendor = async (id: string): Promise<void> => {
+  await apiClient.delete(`/api/vendors/${id}`);
+};
+
+
+// --- TASKS CRUD ---
+// (TasksController only has Create/Update/Delete - Reads are handled via GetTasksQuery)
+export const updateTask = async (id: string, data: Partial<TaskDto>): Promise<void> => {
+  await apiClient.put(`/api/tasks/${id}`, data);
+};
+
+export const deleteTask = async (id: string): Promise<void> => {
+  await apiClient.delete(`/api/tasks/${id}`);
+};
+
+
+// --- NOTES CRUD ---
+// (NotesController only has Update/Delete - Create returns DTO)
+export const updateNote = async (id: string, data: Partial<NoteDto>): Promise<void> => {
+  // NOTE: Notes only allow updating 'content' per the business logic
+  await apiClient.put(`/api/notes/${id}`, data); 
+};
+
+export const deleteNote = async (id: string): Promise<void> => {
+  await apiClient.delete(`/api/notes/${id}`);
+};
+
+
+// --- AUTOMATION & LEADS ---
+
+export const submitLead = async (command: SubmitLeadCommand): Promise<string> => {
+  const response = await apiClient.post<string>('/api/leads/submit', command);
+  return response.data;
+};
+
+export const scheduleFollowUp = async (
+  contactId: string, 
+  templateId: string, 
+  scheduleTime: string, // ISO String
+  type: RecipientType = RecipientType.Contact
+): Promise<string> => {
+  const payload = { contactId, templateId, scheduleTime, type };
+  const response = await apiClient.post<string>('/api/automation/schedule-followup', payload);
+  return response.data;
 };

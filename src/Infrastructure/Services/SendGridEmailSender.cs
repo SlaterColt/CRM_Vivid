@@ -1,3 +1,5 @@
+// FILE: src/Infrastructure/Services/SendGridEmailSender.cs
+
 using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Core.Entities; // For EmailLog
 using Microsoft.EntityFrameworkCore; // For querying Contacts
@@ -13,9 +15,6 @@ public class SendGridEmailSender : IEmailSender
 {
   private readonly IConfiguration _configuration;
   private readonly ILogger<SendGridEmailSender> _logger;
-  // Inject the DB Context via IServiceProvider or directly if Scoped scope allows. 
-  // Since EmailSender is Transient and Context is Scoped, we should be careful.
-  // However, Hangfire jobs create a scope, so injecting IApplicationDbContext directly is safe here.
   private readonly IApplicationDbContext _context;
 
   public SendGridEmailSender(
@@ -28,7 +27,13 @@ public class SendGridEmailSender : IEmailSender
     _context = context;
   }
 
-  public async Task SendEmailAsync(string email, string subject, string htmlMessage)
+  // --- FIX: IMPLEMENT INTERFACE METHOD WITH ALL NEW OPTIONAL PARAMETERS ---
+  public async Task SendEmailAsync(
+      string email,
+      string subject,
+      string htmlMessage,
+      Guid? templateId = null, // NEW: Added optional parameter
+      Guid? eventId = null)    // NEW: Added optional parameter
   {
     var apiKey = _configuration["SendGrid:ApiKey"];
 
@@ -40,7 +45,12 @@ public class SendGridEmailSender : IEmailSender
       Subject = subject,
       Body = htmlMessage,
       SentAt = DateTime.UtcNow,
-      IsSuccess = false // Default to false until proven otherwise
+      IsSuccess = false, // Default to false until proven otherwise
+
+      // --- PHASE 38 FIX: ASSIGN TEMPLATE AND EVENT CONTEXT ---
+      TemplateId = templateId,
+      EventId = eventId
+      // --------------------------------------------------------
     };
 
     // 2. Try to link to a Contact

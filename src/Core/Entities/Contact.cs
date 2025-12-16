@@ -2,7 +2,7 @@ using CRM_Vivid.Core.Enum; // Uses the new file
 
 namespace CRM_Vivid.Core.Entities;
 
-public class Contact
+public class Contact : IUserScopedEntity
 {
   public Guid Id { get; set; } = Guid.NewGuid();
 
@@ -34,4 +34,5 @@ public class Contact
   public ICollection<Note> Notes { get; set; } = new List<Note>();
   public ICollection<Task> Tasks { get; set; } = new List<Task>();
   public ICollection<EmailLog> EmailLogs { get; set; } = new List<EmailLog>();
+  public Guid CreatedByUserId { get; set; }
 }

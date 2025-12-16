@@ -29,6 +29,17 @@ public class AutomationController : ControllerBase
     return Ok(new { Message = "Follow-up job scheduled successfully.", JobId = jobId });
   }
 
+  [HttpPost("send-sms")]
+  public async Task<IActionResult> SendSms([FromBody] SendSmsCommand command)
+  {
+    var success = await _sender.Send(command);
+    if (success)
+    {
+      return Ok(new { Message = "SMS queued successfully." });
+    }
+    return BadRequest(new { Message = "Failed to queue SMS message." });
+  }
+
   // Placeholder for future general automation actions
   // [HttpPost("trigger-workflow")]
   // public IActionResult TriggerWorkflow(...) { ... }

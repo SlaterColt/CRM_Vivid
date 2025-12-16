@@ -1,3 +1,5 @@
+// FILE: frontend_harness/src/components/VendorsPage.tsx
+
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { apiClient } from "../apiClient";
 import type { VendorDto, Guid } from "../types";
@@ -15,6 +17,7 @@ const initialFormState: VendorFormData = {
   phoneNumber: null,
   email: null,
   serviceType: "Other",
+  attributes: null, // NEW: Include attributes
 };
 
 function VendorsPage() {
@@ -36,8 +39,36 @@ function VendorsPage() {
     {}
   );
 
+  // --- NEW: Dynamic Attribute State ---
+  const [dynamicFields, setDynamicFields] = useState<{
+    Capacity?: number | string;
+    Genre?: string;
+  }>({});
+
   const isEditing = editingId !== null;
   const selectedVendor = vendors.find((v) => v.id === selectedVendorId);
+
+  // Function to initialize dynamic fields from the current formData.attributes
+  const initializeDynamicFields = useCallback(
+    (attributesString: string | null) => {
+      if (!attributesString) {
+        setDynamicFields({});
+        return;
+      }
+      try {
+        const parsed = JSON.parse(attributesString);
+        // Set the dynamic fields, ensuring Capacity is handled as a number/string
+        setDynamicFields({
+          Capacity: parsed.Capacity || "",
+          Genre: parsed.Genre || "",
+        });
+      } catch (e) {
+        console.error("Failed to parse vendor attributes JSON:", e);
+        setDynamicFields({});
+      }
+    },
+    []
+  );
 
   const fetchVendors = useCallback(async () => {
     try {
@@ -87,6 +118,7 @@ function VendorsPage() {
   const handleEdit = (vendor: VendorDto) => {
     setEditingId(vendor.id);
     setFormData(vendor);
+    initializeDynamicFields(vendor.attributes); // Initialize dynamic fields when editing
     setValidationErrors({});
     window.scrollTo(0, 0);
   };
@@ -94,6 +126,7 @@ function VendorsPage() {
   const handleCancel = () => {
     setEditingId(null);
     setFormData(initialFormState);
+    setDynamicFields({}); // Clear dynamic fields
     setValidationErrors({});
   };
 
@@ -101,21 +134,63 @@ function VendorsPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+    // When ServiceType changes, reset the dynamic fields state
+    if (name === "serviceType") {
+      setDynamicFields({});
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value === "" ? null : value,
     }));
   };
 
+  // NEW: Handle changes for dynamic fields separately
+  const handleDynamicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setDynamicFields((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const getAttributesJson = () => {
+    const cleanFields = Object.entries(dynamicFields)
+      .filter(([, value]) => value !== null && value !== "" && value !== 0)
+      .reduce((acc, [key, value]) => {
+        // Attempt to parse number fields back to number types for cleaner JSON
+        if (
+          key === "Capacity" &&
+          typeof value === "string" &&
+          !isNaN(Number(value))
+        ) {
+          acc[key] = Number(value);
+        } else {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as Record<string, string | number>);
+
+    if (Object.keys(cleanFields).length === 0) {
+      return null;
+    }
+    return JSON.stringify(cleanFields);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationErrors({});
+
+    // --- PHASE 27: Inject serialized attributes into payload ---
+    const attributesJson = getAttributesJson();
 
     const payload = {
       ...formData,
       name: formData.name ?? "",
       serviceType: formData.serviceType ?? "Other",
+      attributes: attributesJson, // INJECT THE JSON STRING
     };
+    // -------------------------------------------------------------
 
     const promise = isEditing
       ? apiClient.put(`/api/vendors/${editingId}`, payload)
@@ -139,6 +214,53 @@ function VendorsPage() {
 
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
+  // --- NEW: Dynamic Field Renderer ---
+  const renderDynamicFields = (serviceType: string | null | undefined) => {
+    if (serviceType?.toLowerCase() === "venue") {
+      return (
+        <div style={{ marginBottom: "0.5rem" }}>
+          <label>Venue Capacity: </label>
+          <input
+            name="Capacity"
+            type="number"
+            value={dynamicFields.Capacity ?? ""}
+            onChange={handleDynamicChange}
+            placeholder="Max Capacity (e.g., 500)"
+            style={{
+              width: "100%",
+              padding: "8px",
+              backgroundColor: "#333",
+              color: "white",
+              border: "1px solid #555",
+            }}
+          />
+        </div>
+      );
+    }
+    if (serviceType?.toLowerCase() === "entertainment") {
+      return (
+        <div style={{ marginBottom: "0.5rem" }}>
+          <label>Artist Genre: </label>
+          <input
+            name="Genre"
+            type="text"
+            value={dynamicFields.Genre ?? ""}
+            onChange={handleDynamicChange}
+            placeholder="e.g., Jazz, EDM, Acoustic"
+            style={{
+              width: "100%",
+              padding: "8px",
+              backgroundColor: "#333",
+              color: "white",
+              border: "1px solid #555",
+            }}
+          />
+        </div>
+      );
+    }
+    return null;
+  };
+
   const renderVendorListPanel = () => (
     <div
       style={{
@@ -152,6 +274,7 @@ function VendorsPage() {
         onClick={() => {
           setEditingId(null);
           setFormData(initialFormState);
+          setDynamicFields({}); // Ensure state is reset
           setSelectedVendorId(null);
         }}
         style={{ marginBottom: "1rem", padding: "10px" }}>
@@ -183,6 +306,19 @@ function VendorsPage() {
                 <strong>{vendor.name}</strong> <br />
                 <span style={{ fontSize: "0.8rem", color: "#ccc" }}>
                   {vendor.serviceType}
+                  {/* NEW: Display a dynamic attribute if present */}
+                  {vendor.attributes &&
+                    (() => {
+                      try {
+                        const attrs = JSON.parse(vendor.attributes);
+                        if (attrs.Capacity)
+                          return ` | Capacity: ${attrs.Capacity}`;
+                        if (attrs.Genre) return ` | Genre: ${attrs.Genre}`;
+                        return null;
+                      } catch {
+                        return null; // Ignore invalid JSON
+                      }
+                    })()}
                 </span>
               </div>
               <div style={{ fontSize: "0.8rem" }}>
@@ -303,13 +439,28 @@ function VendorsPage() {
                     color: "white",
                     border: "1px solid #555",
                   }}>
+                  {/* NOTE: Added Entertainment option as a requirement example */}
                   <option value="Catering">Catering</option>
                   <option value="Security">Security</option>
                   <option value="Venue">Venue</option>
-                  <option value="AV">AV</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Florist">Florist</option>
+                  <option value="Photography">Photography</option>
+                  <option value="Videography">Videography</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
+
+              {/* --- PHASE 27: Dynamic Attribute Fields RENDER HERE --- */}
+              {renderDynamicFields(formData.serviceType)}
+
+              {validationErrors.Attributes && (
+                <div style={{ color: "#ef5350", marginTop: "0.5rem" }}>
+                  {/* Display validation error for the JSON field */}
+                  {validationErrors.Attributes[0]}
+                </div>
+              )}
+              {/* -------------------------------------------------------- */}
 
               <button
                 type="submit"
@@ -346,6 +497,19 @@ function VendorsPage() {
 
     const vendorIdString = selectedVendorId as string;
 
+    // --- PHASE 27: Dashboard View ---
+    const parsedAttributes = selectedVendor?.attributes
+      ? JSON.parse(selectedVendor.attributes)
+      : {};
+
+    const attributeDisplay = Object.entries(parsedAttributes).map(
+      ([key, value]) => (
+        <p key={key}>
+          <strong>{key}:</strong> {value as string}
+        </p>
+      )
+    );
+
     return (
       <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
         <h1>Vendor Command Center: {selectedVendor?.name}</h1>
@@ -368,6 +532,18 @@ function VendorsPage() {
             <strong>Contact Info:</strong> {selectedVendor?.phoneNumber} /{" "}
             {selectedVendor?.email}
           </p>
+          {/* NEW: Dynamic Attribute Display */}
+          {attributeDisplay.length > 0 && (
+            <div
+              style={{
+                marginTop: "10px",
+                borderTop: "1px dashed #666",
+                paddingTop: "10px",
+              }}>
+              <h4>Specific Attributes</h4>
+              {attributeDisplay}
+            </div>
+          )}
         </div>
 
         <h2 style={{ marginTop: "30px" }}>Related Data</h2>

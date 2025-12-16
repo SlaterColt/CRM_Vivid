@@ -7,5 +7,7 @@ namespace CRM_Vivid.Application.Events.Commands
   {
     public Guid EventId { get; set; }
     public Guid VendorId { get; set; }
+    public string? Role { get; set; }
   }
+
 }

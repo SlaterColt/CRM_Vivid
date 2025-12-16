@@ -1,4 +1,4 @@
-// src/Application/Tasks/Queries/GetTasksQueryHandler.cs
+// FILE: src/Application/Tasks/Queries/GetTasksQueryHandler.cs (MODIFIED)
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using CRM_Vivid.Application.Common.Models;
@@ -25,6 +25,10 @@ namespace CRM_Vivid.Application.Tasks.Queries
       var query = _context.Tasks
           .AsNoTracking()
           .AsQueryable();
+
+      // --- PHASE 32 FIX: EAGER LOAD VENDOR FOR DTO MAPPING ---
+      query = query.Include(t => t.Vendor);
+      // -----------------------------------------------------
 
       // Conditionally apply filters
       if (request.ContactId.HasValue)

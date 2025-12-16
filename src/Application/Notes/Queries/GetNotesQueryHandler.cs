@@ -1,3 +1,4 @@
+// FILE: src/Application/Notes/Queries/GetNotesQueryHandler.cs (MODIFIED)
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using CRM_Vivid.Application.Common.Models;
@@ -21,6 +22,10 @@ public class GetNotesQueryHandler : IRequestHandler<GetNotesQuery, IEnumerable<N
   public async Task<IEnumerable<NoteDto>> Handle(GetNotesQuery request, CancellationToken cancellationToken)
   {
     var query = _context.Notes.AsNoTracking();
+
+    // --- PHASE 32 FIX: EAGER LOAD VENDOR FOR DTO MAPPING ---
+    query = query.Include(n => n.Vendor);
+    // -----------------------------------------------------
 
     if (request.ContactId.HasValue)
     {

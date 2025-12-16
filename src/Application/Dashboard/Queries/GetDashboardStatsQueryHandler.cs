@@ -32,7 +32,7 @@ public class GetDashboardStatsQueryHandler : IRequestHandler<GetDashboardStatsQu
 
     // 3. Pending Tasks (Not Completed)
     var pendingTasks = await _context.Tasks
-        .Where(t => t.Status != CRM_Vivid.Core.Enum.TaskStatus.Completed)
+        .Where(t => t.Status != Core.Enum.TaskStatus.Completed)
         .CountAsync(cancellationToken);
 
     // 4. Recent Emails (Last 24 Hours)

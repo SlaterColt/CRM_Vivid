@@ -111,7 +111,13 @@ public class SendTemplateEmailCommandHandler : IRequestHandler<SendTemplateEmail
     var mergedBody = _merger.Merge(template.Content ?? "", placeholders);
 
     // 5. Send
-    await _emailSender.SendEmailAsync(targetEmail, mergedSubject, mergedBody);
+    await _emailSender.SendEmailAsync(
+      targetEmail,
+      mergedSubject,
+      mergedBody,
+      templateId: request.TemplateId,
+      eventId: request.EventId
+      );
 
     return true;
   }

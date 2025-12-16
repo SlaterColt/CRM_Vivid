@@ -6,6 +6,7 @@ using CRM_Vivid.Infrastructure.Persistence;
 using CRM_Vivid.Infrastructure.Services;
 using Hangfire;
 using Hangfire.Redis.StackExchange;
+using Microsoft.AspNetCore.Http;
 
 namespace CRM_Vivid.Infrastructure;
 
@@ -22,6 +23,10 @@ public static class DependencyInjection
     // 2. Bind the Interface to the Concrete Context
     services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
+    services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+    services.AddScoped<ICurrentUserService, CurrentUserService>();
+
     // 3. Communication Services
     services.AddTransient<IEmailSender, SendGridEmailSender>();
     // Note: ITelephonyService registration is deferred for now.
@@ -31,7 +36,7 @@ public static class DependencyInjection
     services.AddTransient<IContractGenerator, ContractGenerator>();
 
     // 5. Background Job Processing (FIX: Using fully qualified name to force resolution)
-    services.AddTransient<IBackgroundJobService, Services.HangfireJobService>();
+    services.AddTransient<IBackgroundJobService, HangfireJobService>();
 
     // 6. Hangfire & Redis Configuration (Preserved)
     services.AddHangfire(config => config

@@ -1,3 +1,5 @@
+// FILE: src/Infrastructure/Services/TwilioTelephonyService.cs (MODIFIED)
+
 using CRM_Vivid.Application.Common.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -24,6 +26,7 @@ public class TwilioTelephonyService : ITelephonyService
                   throw new ArgumentNullException("Twilio:AccountSid is missing.");
     _authToken = _configuration["Twilio:AuthToken"] ??
                  throw new ArgumentNullException("Twilio:AuthToken is missing.");
+    // This is the number the user must own and submit via configuration (or later, the UI/DB)
     _twilioPhoneNumber = _configuration["Twilio:PhoneNumber"] ??
                          throw new ArgumentNullException("Twilio:PhoneNumber is missing.");
 
@@ -36,6 +39,14 @@ public class TwilioTelephonyService : ITelephonyService
     if (string.IsNullOrWhiteSpace(toPhoneNumber))
     {
       _logger.LogWarning("Skipping SMS send: Recipient phone number is empty.");
+      return false;
+    }
+
+    // CRITICAL: Twilio phone numbers must be in E.164 format (e.g., +15551234567)
+    // We assume the input 'toPhoneNumber' is already valid, but proper validation is required in production.
+    if (!toPhoneNumber.StartsWith("+"))
+    {
+      _logger.LogError("SMS failed: Phone number '{Phone}' is not in E.164 format (must start with '+').", toPhoneNumber);
       return false;
     }
 

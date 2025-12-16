@@ -5,9 +5,11 @@ import BudgetOverview from "./BudgetOverview";
 
 interface Props {
   eventId: string;
+  // NEW PROP: Accepts a key from the parent to force reload
+  refreshKey: number;
 }
 
-export default function FinancialsSection({ eventId }: Props) {
+export default function FinancialsSection({ eventId, refreshKey }: Props) {
   const [financials, setFinancials] = useState<EventFinancials | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +22,8 @@ export default function FinancialsSection({ eventId }: Props) {
     dateIncurred: new Date().toISOString().split("T")[0],
   });
 
-  const loadData = useCallback(async () => {
+  // Renamed loadData to fetchFinancials for clarity
+  const fetchFinancials = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getEventFinancials(eventId);
@@ -30,17 +33,19 @@ export default function FinancialsSection({ eventId }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId]); // Dependency: Only changes if the eventId itself changes
 
+  // FIX: Reruns fetchFinancials whenever eventId OR refreshKey changes
+  // The 'refreshKey' forces a re-render/re-fetch whenever the parent updates the key.
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    fetchFinancials();
+  }, [fetchFinancials, refreshKey]); // Added refreshKey as a direct trigger
 
   const handleCreateBudget = async () => {
     const amountStr = prompt("Enter Total Budget Amount:", "10000");
     if (!amountStr) return;
     await upsertBudget(eventId, parseFloat(amountStr), "USD", "Initial Budget");
-    loadData();
+    fetchFinancials();
   };
 
   const handleSubmitExpense = async (e: React.FormEvent) => {
@@ -62,7 +67,7 @@ export default function FinancialsSection({ eventId }: Props) {
       category: "General",
       dateIncurred: new Date().toISOString().split("T")[0],
     });
-    loadData();
+    fetchFinancials();
   };
 
   if (loading)

@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using Hangfire;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using DotNetEnv;
 
 var _myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -16,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 if (builder.Environment.IsDevelopment())
 {
     IdentityModelEventSource.ShowPII = true;
+    Env.Load();
 }
 
 // 1. CORS Configuration

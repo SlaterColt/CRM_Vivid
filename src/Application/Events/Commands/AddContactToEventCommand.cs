@@ -7,5 +7,5 @@ public class AddContactToEventCommand : IRequest
 {
   public Guid EventId { get; set; }
   public Guid ContactId { get; set; }
-  public string? Role { get; set; } // e.g., "Guest", "Performer", "Staff"
+  public string? Role { get; set; }
 }

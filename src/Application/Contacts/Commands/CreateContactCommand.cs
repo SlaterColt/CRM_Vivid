@@ -12,7 +12,7 @@ public class CreateContactCommand : IRequest<Guid>
   public string? Title { get; set; }
   public string? Organization { get; set; }
 
-  public LeadStage Stage { get; init; } = Core.Enum.LeadStage.NewLead;
-  public ConnectionStatus ConnectionStatus { get; init; } = Core.Enum.ConnectionStatus.NeedToMeet;
+  public LeadStage Stage { get; init; } = LeadStage.NewLead;
+  public ConnectionStatus ConnectionStatus { get; init; } = ConnectionStatus.NeedToMeet;
   public string? Source { get; init; }
 }

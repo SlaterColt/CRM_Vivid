@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+// FILE: frontend_harness/src/components/EventsPage.tsx
+import React, { useEffect, useState, useCallback } from "react";
 import { apiClient } from "../apiClient";
-import type { EventDto, ContactDto } from "../types";
+// FIX 1: Removed unused 'Guid' import
+import type { EventDto, ContactDto, VendorDto } from "../types";
 import axios from "axios";
 import { useSelectionContext } from "../context/useSelectionContext";
 import {
@@ -14,6 +16,91 @@ import FinancialsSection from "./FinancialsSection";
 
 type EventFormData = Omit<EventDto, "id">;
 type ValidationErrors = { [key: string]: string[] };
+
+// --- SUB-COMPONENT: EventVendorAttributesDisplay ---
+interface VendorAttributeProps {
+  eventVendors: VendorDto[]; // All vendors linked to the event (or fetched separately)
+}
+
+const EventVendorAttributesDisplay: React.FC<VendorAttributeProps> = ({
+  eventVendors,
+}) => {
+  // Filter for vendors whose attributes we care about displaying prominently on the dashboard
+  const featuredVendors = eventVendors.filter(
+    (v) =>
+      v.serviceType?.toLowerCase() === "venue" ||
+      v.serviceType?.toLowerCase() === "entertainment"
+  );
+
+  if (featuredVendors.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: "20px",
+        padding: "15px",
+        border: "1px solid #777",
+        borderRadius: "5px",
+        backgroundColor: "#333",
+      }}>
+      <h4 style={{ margin: 0, color: "#ccc" }}>Key Vendor Attributes</h4>
+      <div
+        style={{
+          marginTop: "10px",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "20px",
+        }}>
+        {featuredVendors.map((vendor) => {
+          let attributeDisplay = null;
+          // FIX 2: Changed 'let title' to 'const title'
+          const title = vendor.name;
+
+          try {
+            if (vendor.attributes) {
+              const attrs = JSON.parse(vendor.attributes);
+
+              if (
+                vendor.serviceType?.toLowerCase() === "venue" &&
+                attrs.Capacity
+              ) {
+                attributeDisplay = `Capacity: ${attrs.Capacity}`;
+              } else if (
+                vendor.serviceType?.toLowerCase() === "entertainment" &&
+                attrs.Genre
+              ) {
+                attributeDisplay = `Genre: ${attrs.Genre}`;
+              }
+            }
+          } catch (e) {
+            console.error("Error parsing vendor attributes:", e);
+          }
+
+          if (!attributeDisplay) {
+            // Skip if the required key isn't found
+            return null;
+          }
+
+          return (
+            <div
+              key={vendor.id}
+              style={{ borderLeft: "3px solid #64b5f6", paddingLeft: "10px" }}>
+              <strong style={{ display: "block", color: "#fff" }}>
+                {title} ({vendor.serviceType})
+              </strong>
+              <span style={{ color: "#aaa", fontSize: "0.9rem" }}>
+                {attributeDisplay}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+// --- END EventVendorAttributesDisplay ---
 
 // --- SUB-COMPONENT: ContactLinker ---
 interface ContactLinkerProps {
@@ -77,7 +164,6 @@ const ContactLinker: React.FC<ContactLinkerProps> = ({
 
   if (loading) return <p>Loading contacts for linking...</p>;
   if (contacts.length === 0) return <p>No available contacts to link.</p>;
-
   return (
     <div
       style={{
@@ -114,6 +200,10 @@ function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // FIX 3: Removed unused 'allVendors' state
+  const [eventVendors, setEventVendors] = useState<VendorDto[]>([]);
+  // ----------------------------------
+
   const { selectedEventId, setSelectedEventId } = useSelectionContext();
   const [dashboardKey, setDashboardKey] = useState(0);
 
@@ -126,7 +216,6 @@ function EventsPage() {
     isPublic: false,
     status: "Planned",
   };
-
   const [formData, setFormData] = useState<Partial<EventDto>>(initialFormState);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
@@ -135,8 +224,27 @@ function EventsPage() {
 
   const isEditing = editingId !== null;
 
+  // --- PHASE 29: Fetch Vendor Data for Attribute Display (Simplified) ---
+  const fetchAuxiliaryData = useCallback(async () => {
+    try {
+      // We only need the vendors linked to the *current* event
+      // (which implicitly includes their attributes via the backend DTO)
+      const eventVendorsResponse = selectedEventId
+        ? await apiClient.get<VendorDto[]>(
+            `/api/events/${selectedEventId}/vendors`
+          )
+        : { data: [] as VendorDto[] };
+
+      setEventVendors(eventVendorsResponse.data);
+    } catch (err) {
+      console.error("Failed to fetch event vendor data:", err);
+    }
+  }, [selectedEventId]);
+  // --------------------------------------------------------
+
   const forceDashboardRefresh = () => {
     setDashboardKey((prev) => prev + 1);
+    fetchAuxiliaryData(); // Refetch vendor data when related tables change
   };
 
   const fetchEvents = async () => {
@@ -156,6 +264,16 @@ function EventsPage() {
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  // --- PHASE 29: Refetch auxiliary data when event ID changes ---
+  useEffect(() => {
+    if (selectedEventId) {
+      fetchAuxiliaryData();
+    } else {
+      setEventVendors([]);
+    }
+  }, [selectedEventId, fetchAuxiliaryData]);
+  // -------------------------------------------------------------
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
@@ -192,7 +310,6 @@ function EventsPage() {
     >
   ) => {
     const { name, value, type } = e.target;
-
     if (type === "checkbox") {
       setFormData((prev) => ({
         ...prev,
@@ -219,7 +336,6 @@ function EventsPage() {
         ? new Date(formData.endDateTime).toISOString()
         : "",
     };
-
     const promise = isEditing
       ? apiClient.put(`/api/events/${editingId}`, payload)
       : apiClient.post("/api/events", payload);
@@ -247,7 +363,8 @@ function EventsPage() {
     } else {
       setSelectedEventId(eventId);
     }
-    setDashboardKey(0);
+    // The key update forces the entire dashboard section to remount.
+    setDashboardKey((prev) => prev + 1);
   };
 
   if (error) return <p style={{ color: "red" }}>{error}</p>;
@@ -262,6 +379,7 @@ function EventsPage() {
         }}>
         <h2>{isEditing ? "Edit Event" : "Create Event"}</h2>
         <form onSubmit={handleSubmit}>
+          {/* ... (Form fields remain the same) ... */}
           <div style={{ marginBottom: "0.5rem" }}>
             <label>Name: </label>
             <input
@@ -416,9 +534,16 @@ function EventsPage() {
             Dashboard: Event ID {selectedEventId}
           </h2>
 
+          {/* --- PHASE 29: DISPLAY VENDOR ATTRIBUTES --- */}
+          <EventVendorAttributesDisplay eventVendors={eventVendors} />
+          {/* --------------------------------------------- */}
+
           {/* 1. Financials (High Priority) */}
           <div style={{ marginBottom: "3rem" }}>
-            <FinancialsSection eventId={selectedEventId} />
+            <FinancialsSection
+              eventId={selectedEventId}
+              refreshKey={dashboardKey}
+            />
           </div>
 
           <hr style={{ margin: "2rem 0", borderColor: "#ccc" }} />

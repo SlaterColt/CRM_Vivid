@@ -36,14 +36,17 @@ namespace CRM_Vivid.Application.Financials.Queries
         throw new NotFoundException(nameof(Event), request.EventId);
       }
 
-      // 2. Initialize DTO
+      // 2. Initialize DTO (PHASE 26 FIX HERE)
       var dto = new EventFinancialsDto
       {
         EventId = eventEntity.Id,
         EventName = eventEntity.Name,
         Currency = eventEntity.Budget?.Currency ?? "USD",
         BudgetTotal = eventEntity.Budget?.TotalAmount ?? 0,
-        Notes = eventEntity.Budget?.Notes
+        Notes = eventEntity.Budget?.Notes,
+
+        // --- PHASE 26 FIX: EXPOSE ISLOCKED STATUS ---
+        IsLocked = eventEntity.Budget?.IsLocked ?? false // ADDED
       };
 
       // 3. Process Expenses if Budget exists

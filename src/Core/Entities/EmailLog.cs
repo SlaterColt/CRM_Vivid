@@ -12,8 +12,15 @@ namespace CRM_Vivid.Core.Entities
 
     // Foreign Keys
     public Guid? ContactId { get; set; }
-
-    // Navigation Properties
     public virtual Contact? Contact { get; set; }
+
+    public Guid? VendorId { get; set; }
+    public Vendor? Vendor { get; set; }
+
+    public Guid? EventId { get; set; }
+    public Event? Event { get; set; }
+
+    public Guid? TemplateId { get; set; }
+    public Template? Template { get; set; }
   }
 }

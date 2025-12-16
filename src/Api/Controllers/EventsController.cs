@@ -1,4 +1,4 @@
-// src/Api/Controllers/EventsController.cs
+// FILE: src/Api/Controllers/EventsController.cs
 
 using CRM_Vivid.Application.Common.Models;
 using CRM_Vivid.Application.Events.Commands;
@@ -6,7 +6,6 @@ using CRM_Vivid.Application.Events.Queries;
 using CRM_Vivid.Core.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-// FIX: ADDED MISSING USING DIRECTIVE FOR EXCEPTIONS
 using CRM_Vivid.Application.Exceptions;
 
 namespace CRM_Vivid.Api.Controllers
@@ -96,6 +95,7 @@ namespace CRM_Vivid.Api.Controllers
       {
         await _mediator.Send(command);
       }
+      // Note: Handler now throws NotFoundException and ArgumentException for links
       catch (Exception ex)
       {
         return BadRequest(ex.Message);
@@ -107,6 +107,7 @@ namespace CRM_Vivid.Api.Controllers
     public async Task<ActionResult<IEnumerable<ContactDto>>> GetContactsForEvent(Guid eventId)
     {
       var query = new GetContactsForEventQuery { EventId = eventId };
+      // Handler now uses explicit projection to include the Role
       var contacts = await _mediator.Send(query);
 
       return Ok(contacts);
@@ -141,7 +142,7 @@ namespace CRM_Vivid.Api.Controllers
 
     // --- PHASE 14 VENDOR ENDPOINTS START HERE ---
 
-    // POST api/events/{id}/vendors
+    // POST api/events/{id}/vendors (Now accepts Role)
     [HttpPost("{id}/vendors")]
     public async Task<ActionResult<Guid>> AddVendorToEvent(Guid id, [FromBody] AddVendorToEventCommand command)
     {
@@ -149,9 +150,19 @@ namespace CRM_Vivid.Api.Controllers
       {
         return BadRequest("Event ID in path must match Event ID in body.");
       }
-      // FIX: Use the injected _mediator field
+      // Handler now assigns Role and is hardened
       var eventVendorId = await _mediator.Send(command);
       return Ok(eventVendorId);
+    }
+
+    // --- PHASE 34 ADDITION: Get Vendors for Event with Roles ---
+    [HttpGet("{eventId:guid}/vendors")]
+    public async Task<ActionResult<IEnumerable<VendorDto>>> GetVendorsForEvent(Guid eventId)
+    {
+      // Handler uses explicit projection to include the Role
+      var query = new GetVendorsForEventQuery { EventId = eventId };
+      var vendors = await _mediator.Send(query);
+      return Ok(vendors);
     }
 
     // DELETE api/events/{id}/vendors/{vendorId}

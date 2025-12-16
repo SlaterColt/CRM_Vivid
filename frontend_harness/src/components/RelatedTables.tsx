@@ -123,18 +123,39 @@ export function RelatedTasks(props: RelatedTableProps) {
               <th>Title</th>
               <th>Status</th>
               <th>Due Date</th>
+              <th>Linked Vendor</th> {/* NEW COLUMN HEADER */}
+              <th>Linked Contact</th> {/* NEW COLUMN HEADER */}
+              <th>Linked Event</th> {/* NEW COLUMN HEADER */}
             </tr>
           </thead>
           <tbody>
             {tasks.map((task) => (
               <tr key={task.id}>
-                {/* FIX: Show Full ID */}
-                <td>{task.id}</td>
+                {/* FIX: Show Full ID (Shortened for space) */}
+                <td>{task.id.substring(0, 8)}...</td>
                 <td>{task.title}</td>
                 <td>{task.status}</td>
                 <td>
                   {task.dueDate
                     ? new Date(task.dueDate).toLocaleDateString()
+                    : "N/A"}
+                </td>
+                {/* PHASE 28: Vendor Granularity */}
+                <td>
+                  {task.vendorName ??
+                    (task.vendorId
+                      ? `ID: ${task.vendorId.substring(0, 8)}...`
+                      : "N/A")}
+                </td>
+                {/* PHASE 28: Contact/Event Granularity */}
+                <td>
+                  {task.contactId
+                    ? `ID: ${task.contactId.substring(0, 8)}...`
+                    : "N/A"}
+                </td>
+                <td>
+                  {task.eventId
+                    ? `ID: ${task.eventId.substring(0, 8)}...`
                     : "N/A"}
                 </td>
               </tr>
@@ -202,14 +223,35 @@ export function RelatedNotes(props: RelatedTableProps) {
             <tr>
               <th>ID</th>
               <th>Content</th>
+              <th>Linked Vendor</th> {/* NEW COLUMN HEADER */}
+              <th>Linked Contact</th> {/* NEW COLUMN HEADER */}
+              <th>Linked Event</th> {/* NEW COLUMN HEADER */}
             </tr>
           </thead>
           <tbody>
             {notes.map((note) => (
               <tr key={note.id}>
-                {/* FIX: Show Full ID */}
-                <td>{note.id}</td>
+                {/* FIX: Show Full ID (Shortened for space) */}
+                <td>{note.id.substring(0, 8)}...</td>
                 <td>{note.content}</td>
+                {/* PHASE 28: Vendor Granularity */}
+                <td>
+                  {note.vendorName ??
+                    (note.vendorId
+                      ? `ID: ${note.vendorId.substring(0, 8)}...`
+                      : "N/A")}
+                </td>
+                {/* PHASE 28: Contact/Event Granularity */}
+                <td>
+                  {note.contactId
+                    ? `ID: ${note.contactId.substring(0, 8)}...`
+                    : "N/A"}
+                </td>
+                <td>
+                  {note.eventId
+                    ? `ID: ${note.eventId.substring(0, 8)}...`
+                    : "N/A"}
+                </td>
               </tr>
             ))}
           </tbody>

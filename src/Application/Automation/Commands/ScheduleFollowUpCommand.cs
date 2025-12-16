@@ -73,7 +73,10 @@ public class ScheduleFollowUpCommandHandler : IRequestHandler<ScheduleFollowUpCo
     Expression<Action> jobCall = () => _emailSender.SendEmailAsync(
         contact.Email,
         mergedSubject,
-        mergedBody);
+        mergedBody,
+        request.TemplateId, // Pass the TemplateId
+        request.EventId
+        );
 
     // 4. Schedule the Job using IBackgroundJobService (Hangfire)
     var jobId = _jobService.Schedule(jobCall, request.ScheduleTime);

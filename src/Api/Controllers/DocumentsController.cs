@@ -1,7 +1,8 @@
 using CRM_Vivid.Application.Common.Models;
 using CRM_Vivid.Application.Documents.Commands;
 using CRM_Vivid.Application.Documents.Queries;
-using CRM_Vivid.Application.Exceptions; // Needed for NotFoundException
+using CRM_Vivid.Application.Exceptions;
+using CRM_Vivid.Core.Enum; // NEW: Needed for ContractStatus in Webhook action
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,10 +13,13 @@ namespace CRM_Vivid.Api.Controllers;
 public class DocumentsController : ControllerBase
 {
   private readonly IMediator _mediator;
+  private readonly IConfiguration _configuration; // NEW: Configuration to check Webhook Secret
 
-  public DocumentsController(IMediator mediator)
+  // MODIFIED CONSTRUCTOR
+  public DocumentsController(IMediator mediator, IConfiguration configuration)
   {
     _mediator = mediator;
+    _configuration = configuration;
   }
 
   [HttpPost]
@@ -97,6 +101,53 @@ public class DocumentsController : ControllerBase
     {
       // Catch the specific exception thrown by the command handler if the event doesn't exist
       return NotFound(new { message = $"Event ID {eventId} not found." });
+    }
+  }
+
+  // --- PHASE 26 ADDITION: THE WEBHOOK LISTENER ---
+  [HttpPost("webhook")]
+  [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+  public async Task<IActionResult> Webhook([FromBody] SimulatedWebhookRequest request)
+  {
+    // 1. Security: Check the Webhook Secret (Keep it simple but secure for now)
+    var expectedSecret = _configuration["Secrets:ContractWebhookSecret"];
+
+    if (string.IsNullOrEmpty(expectedSecret) || request.WebhookSecret != expectedSecret)
+    {
+      // Log failure attempt here
+      return Unauthorized("Invalid webhook secret.");
+    }
+
+    // 2. Mapping: Map the incoming Status string to our internal ContractStatus enum
+    ContractStatus newStatus;
+
+    if (!Enum.TryParse(request.Status, true, out newStatus))
+    {
+      return BadRequest($"Invalid status value received: {request.Status}");
+    }
+
+    // 3. Command: Trigger the internal state change logic
+    var command = new UpdateDocumentStatusCommand(
+        DocumentId: request.DocumentId,
+        NewStatus: newStatus
+    );
+
+    try
+    {
+      await _mediator.Send(command);
+      return Ok(new { message = $"Document {request.DocumentId} status updated to {newStatus}." });
+    }
+    catch (NotFoundException ex)
+    {
+      return NotFound(new { message = ex.Message });
+    }
+    catch (Exception ex)
+    {
+      // Catch other errors (e.g., database failure) and return a 500
+      return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Webhook processing failed.", error = ex.Message });
     }
   }
 }

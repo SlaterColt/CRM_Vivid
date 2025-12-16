@@ -42,6 +42,12 @@ public class VendorsController : ControllerBase
     return Ok(vendor);
   }
 
+  [HttpGet("{id:guid}/summary")]
+  public async Task<ActionResult<VendorSummaryDto>> GetVendorSummary(Guid id)
+  {
+    return await _mediator.Send(new GetVendorSummaryQuery(id));
+  }
+
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdateVendor(Guid id, [FromBody] UpdateVendorCommand command)
   {

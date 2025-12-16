@@ -11,6 +11,8 @@ namespace CRM_Vivid.Application.Common.Models
     public DateTime CreatedAt { get; set; }
     public Guid? ContactId { get; set; }
     public Guid? EventId { get; set; }
+    public Guid? VendorId { get; set; }
+    public string? VendorName { get; set; }
 
   }
 }

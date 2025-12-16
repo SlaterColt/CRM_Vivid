@@ -3,7 +3,7 @@ using CRM_Vivid.Core.Enum;
 
 namespace CRM_Vivid.Core.Entities
 {
-  public class Task
+  public class Task : IUserScopedEntity
   {
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -27,5 +27,6 @@ namespace CRM_Vivid.Core.Entities
 
     // NEW: Navigation Property for Vendor
     public Vendor? Vendor { get; set; }
+    public Guid CreatedByUserId { get; set; }
   }
 }

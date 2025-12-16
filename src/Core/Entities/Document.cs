@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using CRM_Vivid.Core.Enum; // NEW
 
 // Protocol 10: The Task Alias
 
@@ -9,7 +10,7 @@ namespace CRM_Vivid.Core.Entities
   public class Document
   {
     [Key]
-    public int Id { get; set; }
+    public int Id { get; set; } // PK is int
 
     [Required]
     [MaxLength(255)]
@@ -36,5 +37,9 @@ namespace CRM_Vivid.Core.Entities
     // --- NEW: The Librarian ---
     [MaxLength(50)]
     public string Category { get; set; } = "General"; // Invoice, Contract, Rider, etc.
+
+    // --- PHASE 26 ADDITIONS ---
+    public ContractStatus Status { get; set; } = ContractStatus.Draft; // NEW
+    public DateTime? SignedAt { get; set; } // NEW
   }
 }

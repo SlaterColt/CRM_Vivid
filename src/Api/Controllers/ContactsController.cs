@@ -26,6 +26,15 @@ public class ContactsController : ControllerBase
     return Ok(contactId);
   }
 
+  [HttpPost("init-fixtures")]
+  public async Task<ActionResult<Guid>> InitializeTestFixtures()
+  {
+    // WARNING: This endpoint bypasses authorization checks in the handler logic 
+    // (it calls ISender directly), but should only be used in dev/test environments.
+    var primaryContactId = await _mediator.Send(new InitializeTestFixturesCommand());
+    return Ok(primaryContactId);
+  }
+
   [HttpGet]
   public async Task<ActionResult<List<Contact>>> Get()
   {
@@ -39,6 +48,12 @@ public class ContactsController : ControllerBase
     var query = new GetContactByIdQuery { Id = id };
     var contact = await _mediator.Send(query);
     return Ok(contact);
+  }
+
+  [HttpGet("{contactId:guid}/task-summary")]
+  public async Task<ActionResult<ContactTaskSummaryDto>> GetContactTaskSummary(Guid contactId)
+  {
+    return await _mediator.Send(new GetContactTaskSummaryQuery(contactId));
   }
 
   [HttpPut("{id}")]
@@ -76,5 +91,13 @@ public class ContactsController : ControllerBase
     var query = new GetEmailLogsForContactQuery(contactId);
     var logs = await _mediator.Send(query);
     return Ok(logs);
+  }
+
+  [HttpGet("{contactId:guid}/activity-stream")]
+  public async Task<ActionResult<List<ActivityDto>>> GetActivityStream(Guid contactId)
+  {
+    var query = new GetActivityStreamQuery(contactId);
+    var stream = await _mediator.Send(query);
+    return Ok(stream);
   }
 }

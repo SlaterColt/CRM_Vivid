@@ -1,13 +1,85 @@
-// --- "SOURCE OF TRUTH" DTOs ---
+// =======================================================
+// FILE: frontend_harness/src/types.ts
+// =======================================================
+
+// --- ENUMS REPLACED WITH CONST OBJECTS (Erasable Syntax Compliant) ---
+
+export const VendorType = {
+  Catering: "Catering",
+  Venue: "Venue",
+  Security: "Security",
+  Entertainment: "Entertainment",
+  Florist: "Florist",
+  Photography: "Photography",
+  Videography: "Videography",
+  Other: "Other"
+} as const;
+export type VendorType = typeof VendorType[keyof typeof VendorType];
+
+export const LeadStage = {
+  NewLead: 0,
+  InDiscussion: 1,
+  ProposalSent: 2,
+  Negotiating: 3,
+  Won: 4,
+  Lost: 5
+} as const;
+export type LeadStage = typeof LeadStage[keyof typeof LeadStage];
+
+export const ConnectionStatus = {
+  Unknown: 0,
+  NeedToMeet: 1,
+  MetAlready: 2,
+  DoesntNeed: 3,
+  NeedAndDoesntHave: 4,
+  NeedAndHas: 5,
+  HasAndNeedsToMeet: 6
+} as const;
+export type ConnectionStatus = typeof ConnectionStatus[keyof typeof ConnectionStatus];
+
+export const TaskStatus = {
+  NotStarted: "NotStarted",
+  InProgress: "InProgress",
+  Completed: "Completed",
+  Deferred: "Deferred"
+} as const;
+export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
+
+export const TaskPriority = {
+  Low: "Low",
+  Medium: "Medium",
+  High: "High",
+  Urgent: "Urgent"
+} as const;
+export type TaskPriority = typeof TaskPriority[keyof typeof TaskPriority];
+
+// --- DTOs ---
 
 export interface ContactDto {
   id: string;
   firstName: string;
   lastName: string | null;
-  email: string; 
+  email: string;
   phoneNumber: string | null;
   title: string | null;
   organization: string | null;
+  
+  // --- NEW: Pipeline Fields (Phase 25) ---
+  stage: LeadStage;
+  connectionStatus: ConnectionStatus;
+  isLead: boolean;
+  followUpCount: number;
+  lastContactedAt: string | null; // ISO Date
+  source: string | null;
+}
+
+export interface VendorDto {
+  id: string;
+  name: string;
+  phoneNumber: string | null;
+  email: string | null;
+  serviceType: VendorType;
+  attributes: string | null;
 }
 
 export interface EventDto {
@@ -18,39 +90,40 @@ export interface EventDto {
   endDateTime: string; // ISO 8601 string
   location: string | null;
   isPublic: boolean;
-  status: string; // "Planned", "InProgress", "Completed", "Cancelled" etc.
+  status: string; 
 }
 
 export interface TaskDto {
   id: string;
   title: string;
   description: string | null;
-  status: string; // "NotStarted", "InProgress", "Completed"
-  priority: string; // "Low", "Medium", "High"
-  dueDate: string | null; // ISO 8601 string
-  createdAt: string; // ISO 8601 string
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate: string | null;
+  createdAt: string;
   contactId: string | null;
   eventId: string | null;
-  vendorId: string | null; 
-}
-
-export interface VendorDto {
-  id: string;
-  name: string;
-  phoneNumber: string | null;
-  email: string | null;
-  serviceType: string; 
+  vendorId: string | null;
+  vendorName: string | null;
+  contactEmail?: string;
+  eventName?: string;
+  vendorNameForLookup?: string;
 }
 
 export interface NoteDto {
   id: string;
   content: string;
-  createdAt: string; // ISO 8601 string
-  updatedAt: string | null; // ISO 8601 string
+  createdAt: string;
+  updatedAt: string | null;
   contactId: string | null;
   eventId: string | null;
   taskId: string | null;
   vendorId: string | null;
+  vendorName: string | null;
+  contactEmail?: string;
+  eventName?: string;
+  vendorNameForLookup?: string;
+  taskTitle?: string;
 }
 
 export interface TemplateDto {
@@ -58,48 +131,51 @@ export interface TemplateDto {
   name: string;
   subject: string | null;
   content: string;
-  type: string; // "Email" or "SMS"
+  type: string;
 }
 
 export interface EmailLogDto {
   id: string;
   to: string;
   subject: string;
-  sentAt: string; // ISO 8601 string
+  sentAt: string;
   isSuccess: boolean;
   errorMessage: string | null;
 }
 
-// --- Create/Update DTO Types (Omitting 'id') ---
-export type CreateContactDto = Omit<ContactDto, 'id' | 'createdAt'>;
-export type CreateEventDto = Omit<EventDto, 'id' | 'createdAt'>;
-export type CreateTaskDto = Omit<TaskDto, 'id' | 'createdAt'>;
-export type CreateVendorDto = Omit<VendorDto, 'id' | 'createdAt'>;
-export type CreateNoteDto = Omit<NoteDto, 'id' | 'createdAt' | 'updatedAt'>;
-export type CreateTemplateDto = Omit<TemplateDto, 'id'>;
-
-// Type alias for GUIDs used across the application
-export type Guid = string;
-
-// --- DASHBOARD DTO ---
+// --- NEW: DASHBOARD DTO (PHASE 31 FIX) ---
 export interface DashboardStatsDto {
   totalContacts: number;
   activeEvents: number;
   pendingTasks: number;
   recentEmails: number;
-  upcomingEvents: EventDto[];
+  upcomingEvents: EventDto[]; // Uses the EventDto defined above
 }
+
+// --- DOCUMENT & FINANCIALS (Phase 26) ---
+
+export type ContractStatus = 1 | 2 | 3 | 4 | 5;
+
+export const ContractStatusName: Record<ContractStatus, string> = {
+    1: "Draft",
+    2: "Sent",
+    3: "Viewed",
+    4: "Signed",
+    5: "Voided"
+};
 
 export interface Document {
   id: number;
   fileName: string;
   contentType: string;
   size: number;
-  uploadedAt: string; // ISO Date string
+  uploadedAt: string;
   url: string;
   relatedEntityId: string;
   relatedEntityType: string;
-  category: string; // NEW: The Librarian field
+  category: string;
+  status: ContractStatus;
+  signedAt: string | null;
 }
 
 export type ExpenseCategory = 
@@ -111,10 +187,8 @@ export interface Expense {
     budgetId: string;
     description: string;
     amount: number;
-    dateIncurred: string; // ISO Date
+    dateIncurred: string;
     category: ExpenseCategory;
-    
-    // Linked Info
     vendorId?: string;
     vendorName?: string;
     linkedDocumentId?: number;
@@ -124,26 +198,22 @@ export interface Expense {
 export interface EventFinancials {
     eventId: string;
     eventName: string;
-    
-    // Budget Settings
     budgetTotal: number;
     currency: string;
     notes?: string;
-
-    // The Ledger
+    isLocked: boolean;
     expenses: Expense[];
-
-    // Computed
     totalSpent: number;
     remainingBudget: number;
-    burnRate: number; // 0.0 to 1.0
+    burnRate: number;
 }
+
+// --- COMMANDS ---
 
 export const RecipientType = {
   Contact: 0,
   Vendor: 1
 } as const;
-
 export type RecipientType = typeof RecipientType[keyof typeof RecipientType];
 
 export interface SendTemplateEmailCommand {
@@ -161,3 +231,13 @@ export interface SubmitLeadCommand {
   organization?: string;
   source?: string;
 }
+
+// Type aliases for CREATE DTOs
+export type CreateContactDto = Omit<ContactDto, 'id'>;
+export type CreateEventDto = Omit<EventDto, 'id' | 'createdAt'>;
+export type CreateTaskDto = Omit<TaskDto, 'id' | 'createdAt'>;
+export type CreateVendorDto = Omit<VendorDto, 'id' | 'createdAt'>;
+export type CreateNoteDto = Omit<NoteDto, 'id' | 'createdAt' | 'updatedAt'>;
+export type CreateTemplateDto = Omit<TemplateDto, 'id'>;
+
+export type Guid = string;

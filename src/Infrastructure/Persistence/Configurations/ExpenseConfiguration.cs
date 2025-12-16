@@ -27,7 +27,7 @@ namespace CRM_Vivid.Infrastructure.Persistence.Configurations
       // Relationship: Vendor (Optional)
       // If Vendor is deleted, keep the expense history but null the reference.
       builder.HasOne(e => e.Vendor)
-          .WithMany()
+          .WithMany(v => v.Expenses)
           .HasForeignKey(e => e.VendorId)
           .OnDelete(DeleteBehavior.SetNull);
 

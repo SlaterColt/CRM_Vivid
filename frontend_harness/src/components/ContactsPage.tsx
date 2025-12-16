@@ -1,6 +1,10 @@
+// =======================================================
+// FILE: frontend_harness/src/components/ContactsPage.tsx
+// =======================================================
 import { useEffect, useState } from "react";
 import { apiClient } from "../apiClient";
 import type { ContactDto } from "../types";
+import { LeadStage, ConnectionStatus } from "../types";
 import axios from "axios";
 
 import { useSelectionContext } from "../context/useSelectionContext";
@@ -8,7 +12,7 @@ import {
   RelatedTasks,
   RelatedNotes,
   ContactEventsTable,
-  EmailHistoryTable, // NEW IMPORT
+  EmailHistoryTable,
 } from "./RelatedTables";
 
 type ContactFormData = Omit<ContactDto, "id">;
@@ -80,6 +84,13 @@ function ContactsPage() {
     phoneNumber: null,
     title: null,
     organization: null,
+    // New Pipeline Fields
+    stage: LeadStage.NewLead,
+    connectionStatus: ConnectionStatus.NeedToMeet,
+    isLead: true,
+    followUpCount: 0,
+    source: null,
+    lastContactedAt: null,
   };
 
   const [formData, setFormData] =
@@ -123,7 +134,7 @@ function ContactsPage() {
 
   useEffect(() => {
     fetchContacts();
-    fetchTemplates(); // Load templates on mount
+    fetchTemplates();
     return () => {
       setSelectedContactId(null);
     };
@@ -162,12 +173,30 @@ function ContactsPage() {
     setValidationErrors({});
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value === "" ? null : value,
-    }));
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = e.target;
+
+    setFormData((prev) => {
+      let newValue: string | number | boolean | null =
+        value === "" ? null : value;
+
+      // Handle Numeric Enums (Stage & ConnectionStatus)
+      if (name === "stage" || name === "connectionStatus") {
+        newValue = parseInt(value, 10);
+      }
+
+      // Handle Checkbox
+      if (type === "checkbox") {
+        newValue = (e.target as HTMLInputElement).checked;
+      }
+
+      return {
+        ...prev,
+        [name]: newValue,
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -179,6 +208,11 @@ function ContactsPage() {
       firstName: formData.firstName ?? "",
       lastName: formData.lastName ?? "",
       email: formData.email ?? "",
+      stage: formData.stage ?? LeadStage.NewLead,
+      connectionStatus:
+        formData.connectionStatus ?? ConnectionStatus.NeedToMeet,
+      isLead: formData.isLead ?? true,
+      followUpCount: formData.followUpCount ?? 0,
     };
 
     const promise = isEditing
@@ -324,49 +358,135 @@ function ContactsPage() {
         }}>
         <h2>{isEditing ? "Edit Contact" : "Create Contact"}</h2>
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "0.5rem" }}>
-            <label>First Name: </label>
-            <input
-              name="firstName"
-              value={formData.firstName ?? ""}
-              onChange={handleChange}
-            />
-            {validationErrors.FirstName && (
-              <div style={{ color: "red" }}>
-                {validationErrors.FirstName[0]}
+          {/* --- Identity Fields --- */}
+          <div style={{ display: "flex", gap: "1rem" }}>
+            <div style={{ marginBottom: "0.5rem", flex: 1 }}>
+              <label>First Name: </label>
+              <input
+                name="firstName"
+                value={formData.firstName ?? ""}
+                onChange={handleChange}
+                style={{ width: "100%" }}
+              />
+              {validationErrors.FirstName && (
+                <div style={{ color: "red" }}>
+                  {validationErrors.FirstName[0]}
+                </div>
+              )}
+            </div>
+            <div style={{ marginBottom: "0.5rem", flex: 1 }}>
+              <label>Last Name: </label>
+              <input
+                name="lastName"
+                value={formData.lastName ?? ""}
+                onChange={handleChange}
+                style={{ width: "100%" }}
+              />
+              {validationErrors.LastName && (
+                <div style={{ color: "red" }}>
+                  {validationErrors.LastName[0]}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "1rem" }}>
+            <div style={{ marginBottom: "0.5rem", flex: 1 }}>
+              <label>Email: </label>
+              <input
+                name="email"
+                value={formData.email ?? ""}
+                onChange={handleChange}
+                style={{ width: "100%" }}
+              />
+              {validationErrors.Email && (
+                <div style={{ color: "red" }}>{validationErrors.Email[0]}</div>
+              )}
+            </div>
+            <div style={{ marginBottom: "0.5rem", flex: 1 }}>
+              <label>Phone: </label>
+              <input
+                name="phoneNumber"
+                value={formData.phoneNumber ?? ""}
+                onChange={handleChange}
+                style={{ width: "100%" }}
+              />
+            </div>
+          </div>
+
+          {/* --- Pipeline & Strategy Fields (NEW) --- */}
+          <div
+            style={{
+              margin: "1rem 0",
+              padding: "1rem",
+              border: "1px dashed #666",
+              borderRadius: "4px",
+            }}>
+            <h4 style={{ marginTop: 0, marginBottom: "0.5rem" }}>
+              Pipeline Status
+            </h4>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+              {/* Stage Dropdown */}
+              <div style={{ flex: 1 }}>
+                <label>Lead Stage: </label>
+                <select
+                  name="stage"
+                  value={formData.stage ?? LeadStage.NewLead}
+                  onChange={handleChange}
+                  style={{ width: "100%", padding: "4px" }}>
+                  {Object.entries(LeadStage).map(([key, value]) => (
+                    <option key={key} value={value}>
+                      {key}
+                    </option>
+                  ))}
+                </select>
               </div>
-            )}
+
+              {/* Connection Status Dropdown */}
+              <div style={{ flex: 1 }}>
+                <label>Connection Status: </label>
+                <select
+                  name="connectionStatus"
+                  value={
+                    formData.connectionStatus ?? ConnectionStatus.NeedToMeet
+                  }
+                  onChange={handleChange}
+                  style={{ width: "100%", padding: "4px" }}>
+                  {Object.entries(ConnectionStatus).map(([key, value]) => (
+                    <option key={key} value={value}>
+                      {key}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Is Lead Checkbox */}
+              <div
+                style={{
+                  flex: "0 0 auto",
+                  display: "flex",
+                  alignItems: "center",
+                  paddingTop: "1.2rem",
+                }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    cursor: "pointer",
+                  }}>
+                  <input
+                    type="checkbox"
+                    name="isLead"
+                    checked={formData.isLead ?? true}
+                    onChange={handleChange}
+                    style={{ marginRight: "0.5rem" }}
+                  />
+                  Is Lead?
+                </label>
+              </div>
+            </div>
           </div>
-          <div style={{ marginBottom: "0.5rem" }}>
-            <label>Last Name: </label>
-            <input
-              name="lastName"
-              value={formData.lastName ?? ""}
-              onChange={handleChange}
-            />
-            {validationErrors.LastName && (
-              <div style={{ color: "red" }}>{validationErrors.LastName[0]}</div>
-            )}
-          </div>
-          <div style={{ marginBottom: "0.5rem" }}>
-            <label>Email: </label>
-            <input
-              name="email"
-              value={formData.email ?? ""}
-              onChange={handleChange}
-            />
-            {validationErrors.Email && (
-              <div style={{ color: "red" }}>{validationErrors.Email[0]}</div>
-            )}
-          </div>
-          <div style={{ marginBottom: "0.5rem" }}>
-            <label>Phone: </label>
-            <input
-              name="phoneNumber"
-              value={formData.phoneNumber ?? ""}
-              onChange={handleChange}
-            />
-          </div>
+
           <div style={{ marginBottom: "0.5rem" }}>
             <label>Organization: </label>
             <input
@@ -411,10 +531,9 @@ function ContactsPage() {
           <thead>
             <tr>
               <th>ID</th>
-              <th>First Name</th>
-              <th>Last Name</th>
+              <th>Name</th>
               <th>Email</th>
-              <th>Phone</th>
+              <th>Status</th> {/* NEW COLUMN */}
               <th>Organization</th>
               <th>Actions</th>
             </tr>
@@ -436,11 +555,27 @@ function ContactsPage() {
                     handleRowClick(contact.id);
                   }
                 }}>
-                <td>{contact.id}</td>
-                <td>{contact.firstName}</td>
-                <td>{contact.lastName}</td>
+                <td>{contact.id.substring(0, 8)}...</td>
+                <td>
+                  {contact.firstName} {contact.lastName}
+                </td>
                 <td>{contact.email}</td>
-                <td>{contact.phoneNumber ?? "N/A"}</td>
+                {/* NEW STATUS COLUMN */}
+                <td>
+                  <span
+                    style={{
+                      fontSize: "0.8rem",
+                      padding: "2px 4px",
+                      background: "#444",
+                      borderRadius: "4px",
+                    }}>
+                    {Object.keys(LeadStage).find(
+                      (key) =>
+                        LeadStage[key as keyof typeof LeadStage] ===
+                        contact.stage
+                    )}
+                  </span>
+                </td>
                 <td>{contact.organization ?? "N/A"}</td>
                 <td>
                   <button
@@ -476,7 +611,7 @@ function ContactsPage() {
           <ContactEventsTable />
           <RelatedTasks />
           <RelatedNotes />
-          <EmailHistoryTable /> {/* NEW COMPONENT ADDED HERE */}
+          <EmailHistoryTable />
         </div>
       )}
     </div>

@@ -36,6 +36,9 @@ namespace CRM_Vivid.Infrastructure.Migrations
                     b.Property<Guid>("EventId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsLocked")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Notes")
                         .HasColumnType("text");
 
@@ -64,6 +67,9 @@ namespace CRM_Vivid.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("now()");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -154,8 +160,14 @@ namespace CRM_Vivid.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<DateTime?>("SignedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<long>("Size")
                         .HasColumnType("bigint");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("StoredFileName")
                         .IsRequired()
@@ -188,6 +200,9 @@ namespace CRM_Vivid.Infrastructure.Migrations
                     b.Property<string>("ErrorMessage")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("EventId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsSuccess")
                         .HasColumnType("boolean");
 
@@ -199,14 +214,26 @@ namespace CRM_Vivid.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<Guid?>("TemplateId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("To")
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<Guid?>("VendorId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ContactId");
+
+                    b.HasIndex("EventId");
+
+                    b.HasIndex("TemplateId");
+
+                    b.HasIndex("VendorId");
 
                     b.ToTable("EmailLogs");
                 });
@@ -257,6 +284,9 @@ namespace CRM_Vivid.Infrastructure.Migrations
                     b.Property<Guid>("ContactId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Role")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -274,8 +304,14 @@ namespace CRM_Vivid.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("EventId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Role")
+                        .HasColumnType("text");
 
                     b.Property<Guid>("VendorId")
                         .HasColumnType("uuid");
@@ -348,11 +384,18 @@ namespace CRM_Vivid.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("EventId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("TaskId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -384,6 +427,9 @@ namespace CRM_Vivid.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Description")
                         .HasMaxLength(5000)
@@ -459,6 +505,12 @@ namespace CRM_Vivid.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Attributes")
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Email")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -500,7 +552,25 @@ namespace CRM_Vivid.Infrastructure.Migrations
                         .HasForeignKey("ContactId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("CRM_Vivid.Core.Entities.Event", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventId");
+
+                    b.HasOne("CRM_Vivid.Core.Entities.Template", "Template")
+                        .WithMany()
+                        .HasForeignKey("TemplateId");
+
+                    b.HasOne("CRM_Vivid.Core.Entities.Vendor", "Vendor")
+                        .WithMany()
+                        .HasForeignKey("VendorId");
+
                     b.Navigation("Contact");
+
+                    b.Navigation("Event");
+
+                    b.Navigation("Template");
+
+                    b.Navigation("Vendor");
                 });
 
             modelBuilder.Entity("CRM_Vivid.Core.Entities.EventContact", b =>
@@ -555,7 +625,7 @@ namespace CRM_Vivid.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("CRM_Vivid.Core.Entities.Vendor", "Vendor")
-                        .WithMany()
+                        .WithMany("Expenses")
                         .HasForeignKey("VendorId")
                         .OnDelete(DeleteBehavior.SetNull);
 
@@ -648,6 +718,8 @@ namespace CRM_Vivid.Infrastructure.Migrations
             modelBuilder.Entity("CRM_Vivid.Core.Entities.Vendor", b =>
                 {
                     b.Navigation("EventVendors");
+
+                    b.Navigation("Expenses");
                 });
 #pragma warning restore 612, 618
         }

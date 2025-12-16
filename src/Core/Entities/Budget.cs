@@ -13,6 +13,9 @@ namespace CRM_Vivid.Core.Entities
 
     public string? Notes { get; set; }
 
+    // --- PHASE 26 ADDITION: Locking Mechanism ---
+    public bool IsLocked { get; set; } = false; // NEW
+
     // Navigation to Line Items
     public ICollection<Expense> Expenses { get; set; } = new List<Expense>();
   }
