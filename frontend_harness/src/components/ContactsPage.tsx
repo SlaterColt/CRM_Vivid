@@ -1,10 +1,11 @@
-// =======================================================
 // FILE: frontend_harness/src/components/ContactsPage.tsx
-// =======================================================
+
 import { useEffect, useState } from "react";
-import { apiClient } from "../apiClient";
-import type { ContactDto } from "../types";
-import { LeadStage, ConnectionStatus } from "../types";
+// ADDED: sendSms
+import { apiClient, scheduleEmail, sendSms } from "../apiClient";
+import type { ContactDto, TemplateDto } from "../types";
+// ADDED: TemplateType
+import { LeadStage, ConnectionStatus, TemplateType } from "../types";
 import axios from "axios";
 
 import { useSelectionContext } from "../context/useSelectionContext";
@@ -16,16 +17,8 @@ import {
 } from "./RelatedTables";
 
 type ContactFormData = Omit<ContactDto, "id">;
-
 type ValidationErrors = {
   [key: string]: string[];
-};
-
-// Local definition for Template to avoid editing types.ts in this turn
-type TemplateDto = {
-  id: string;
-  name: string;
-  content: string;
 };
 
 const styleSheet = document.createElement("style");
@@ -66,7 +59,7 @@ function ContactsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // --- Email Scheduling State ---
+  // --- Communication Scheduling State ---
   const [templates, setTemplates] = useState<TemplateDto[]>([]);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [emailConfig, setEmailConfig] = useState({
@@ -91,6 +84,7 @@ function ContactsPage() {
     followUpCount: 0,
     source: null,
     lastContactedAt: null,
+    role: null,
   };
 
   const [formData, setFormData] =
@@ -101,7 +95,6 @@ function ContactsPage() {
   );
 
   const { selectedContactId, setSelectedContactId } = useSelectionContext();
-
   const isEditing = editingId !== null;
 
   const fetchContacts = async () => {
@@ -177,7 +170,6 @@ function ContactsPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value, type } = e.target;
-
     setFormData((prev) => {
       let newValue: string | number | boolean | null =
         value === "" ? null : value;
@@ -248,9 +240,10 @@ function ContactsPage() {
     }
   };
 
-  // --- Email Modal Handlers ---
+  // --- Email/SMS Modal Handlers ---
   const openEmailModal = (e: React.MouseEvent, contact: ContactDto) => {
-    e.stopPropagation(); // Prevent row selection
+    e.stopPropagation();
+    // Prevent row selection
     setEmailConfig({
       contactId: contact.id,
       contactName: `${contact.firstName} ${contact.lastName}`,
@@ -266,32 +259,76 @@ function ContactsPage() {
       return;
     }
 
+    // 1. Find Data Objects
+    const targetContact = contacts.find((c) => c.id === emailConfig.contactId);
+    const targetTemplate = templates.find(
+      (t) => t.id === emailConfig.templateId
+    );
+
+    if (!targetContact || !targetTemplate) {
+      alert("Contact or Template not found.");
+      return;
+    }
+
     try {
-      await apiClient.post("/api/automation/schedule-email", {
-        contactId: emailConfig.contactId,
-        templateId: emailConfig.templateId,
-        sendAt: emailConfig.sendAt
+      // 2. Traffic Controller: SMS vs Email
+      if (targetTemplate.type === TemplateType.SMS) {
+        // --- ROUTE A: SMS ---
+        await sendSms(targetContact.id, targetTemplate.id);
+        alert("SMS sent successfully!");
+      } else {
+        // --- ROUTE B: EMAIL ---
+        // Safe Time Buffer (Now + 1 min if blank)
+        const safeTime = emailConfig.sendAt
           ? new Date(emailConfig.sendAt).toISOString()
-          : null,
-      });
-      alert("Email scheduled successfully!");
+          : new Date(Date.now() + 60 * 1000).toISOString();
+
+        await scheduleEmail({
+          contact: targetContact,
+          templateId: targetTemplate.id,
+          subject: targetTemplate.subject || "New Message",
+          templateContent: targetTemplate.content,
+          scheduleTime: safeTime,
+        });
+
+        alert("Email scheduled successfully!");
+      }
+
       setIsEmailModalOpen(false);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      alert("Failed to schedule email.");
+
+      let msg = "Failed to send communication.";
+
+      if (
+        axios.isAxiosError(err) &&
+        err.response?.data?.errors?.[0]?.ErrorMessage
+      ) {
+        msg = err.response.data.errors[0].ErrorMessage;
+      } else if (err instanceof Error) {
+        msg = err.message;
+      }
+
+      alert(`Error: ${msg}`);
     }
   };
+
+  // Helper: Is the currently selected template an SMS?
+  const isSelectedTemplateSms =
+    templates.find((t) => t.id === emailConfig.templateId)?.type ===
+    TemplateType.SMS;
+
   // ----------------------------
 
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
     <div>
-      {/* --- Email Modal --- */}
+      {/* --- Communication Modal --- */}
       {isEmailModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Send Email to: {emailConfig.contactName}</h3>
+            <h3>Send Message to: {emailConfig.contactName}</h3>
 
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ display: "block", marginBottom: "0.5rem" }}>
@@ -309,29 +346,44 @@ function ContactsPage() {
                 <option value="">-- Select a Template --</option>
                 {templates.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name}
+                    {t.name} ({t.type === TemplateType.SMS ? "SMS" : "Email"})
                   </option>
                 ))}
               </select>
             </div>
 
-            <div style={{ marginBottom: "1rem" }}>
-              <label style={{ display: "block", marginBottom: "0.5rem" }}>
-                Send At (Optional):
-              </label>
-              <input
-                type="datetime-local"
-                style={{ width: "100%", padding: "0.5rem" }}
-                value={emailConfig.sendAt}
-                onChange={(e) =>
-                  setEmailConfig((prev) => ({
-                    ...prev,
-                    sendAt: e.target.value,
-                  }))
-                }
-              />
-              <small>Leave blank to send immediately.</small>
-            </div>
+            {/* Conditionally Render Date Picker or SMS Info */}
+            {!isSelectedTemplateSms ? (
+              <div style={{ marginBottom: "1rem" }}>
+                <label style={{ display: "block", marginBottom: "0.5rem" }}>
+                  Send At (Optional):
+                </label>
+                <input
+                  type="datetime-local"
+                  style={{ width: "100%", padding: "0.5rem" }}
+                  value={emailConfig.sendAt}
+                  onChange={(e) =>
+                    setEmailConfig((prev) => ({
+                      ...prev,
+                      sendAt: e.target.value,
+                    }))
+                  }
+                />
+                <small>Leave blank to send immediately.</small>
+              </div>
+            ) : (
+              <div
+                style={{
+                  marginBottom: "1rem",
+                  padding: "0.5rem",
+                  backgroundColor: "#334155",
+                  borderRadius: "4px",
+                  fontSize: "0.9em",
+                  color: "#e2e8f0",
+                }}>
+                ℹ️ SMS messages are sent immediately.
+              </div>
+            )}
 
             <div
               style={{
@@ -343,7 +395,7 @@ function ContactsPage() {
               <button
                 onClick={handleEmailSubmit}
                 style={{ backgroundColor: "#004a99", color: "white" }}>
-                Send Email
+                Confirm & Send
               </button>
             </div>
           </div>
@@ -591,7 +643,7 @@ function ContactsPage() {
                   <button
                     onClick={(e) => openEmailModal(e, contact)}
                     style={{ color: "lightgreen" }}>
-                    Send Email
+                    Send Msg
                   </button>
                 </td>
               </tr>

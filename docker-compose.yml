@@ -11,6 +11,16 @@ services:
       - "5432:5432"
     volumes:
       - crm_vivid_pgdata:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: crm_vivid_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@vivid.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres_db
 
   # NEW: The caching engine
   redis_cache:

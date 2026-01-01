@@ -24,6 +24,7 @@ public class GetTemplatesQueryHandler : IRequestHandler<GetTemplatesQuery, List<
   {
     return await _context.Templates
         .AsNoTracking()
+        .Where(t => !t.IsDeleted)
         .ProjectTo<TemplateDto>(_mapper.ConfigurationProvider)
         .OrderBy(t => t.Name)
         .ToListAsync(cancellationToken);

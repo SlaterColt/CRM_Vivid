@@ -1,25 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { apiClient, deleteDocument } from "../apiClient";
-import type { Document } from "../types";
+import type { DocumentDto } from "../types"; // Adjusted import to DocumentDto
 import { FileUploader } from "./FileUploader";
 
 interface DocumentsSectionProps {
   entityId: string;
-  entityType: "Event" | "Vendor" | "Contact" | "Task"; // Reusable!
+  entityType: "Event" | "Vendor" | "Contact" | "Task";
 }
 
 export const DocumentsSection: React.FC<DocumentsSectionProps> = ({
   entityId,
   entityType,
 }) => {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<DocumentDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false); // New state for button
 
   useEffect(() => {
     const fetchDocuments = async () => {
       setLoading(true);
       try {
-        const response = await apiClient.get<Document[]>("/api/documents", {
+        const response = await apiClient.get<DocumentDto[]>("/api/documents", {
           params: { relatedEntityId: entityId, relatedEntityType: entityType },
         });
         setDocuments(response.data);
@@ -33,8 +34,30 @@ export const DocumentsSection: React.FC<DocumentsSectionProps> = ({
     if (entityId) fetchDocuments();
   }, [entityId, entityType]);
 
-  const handleUploadSuccess = (newDoc: Document) => {
+  const handleUploadSuccess = (newDoc: DocumentDto) => {
     setDocuments((prev) => [newDoc, ...prev]);
+  };
+
+  // --- NEW: Generate Contract Function ---
+  const handleGenerateContract = async () => {
+    if (!window.confirm("Generate a PDF contract based on current event data?"))
+      return;
+
+    setGenerating(true);
+    try {
+      // Calls the new POST endpoint
+      const response = await apiClient.post<DocumentDto>(
+        `/api/documents/generate-contract/${entityId}`
+      );
+      // Add the new file to the list immediately
+      setDocuments((prev) => [response.data, ...prev]);
+      alert("Contract generated successfully!");
+    } catch (err) {
+      console.error("Failed to generate contract", err);
+      alert("Failed to generate contract. Ensure Event ID is valid.");
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const handleDeleteDocument = async (id: number) => {
@@ -62,19 +85,18 @@ export const DocumentsSection: React.FC<DocumentsSectionProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  // Helper for Category Badges
   const getCategoryColor = (cat: string) => {
     switch (cat) {
       case "Invoice":
-        return "#e0f2fe"; // Light Blue
+        return "#e0f2fe";
       case "Contract":
-        return "#fce7f3"; // Pink
+        return "#fce7f3";
       case "Legal":
-        return "#fee2e2"; // Red
+        return "#fee2e2";
       case "Marketing":
-        return "#dcfce7"; // Green
+        return "#dcfce7";
       default:
-        return "#f3f4f6"; // Grey
+        return "#f3f4f6";
     }
   };
 
@@ -104,15 +126,37 @@ export const DocumentsSection: React.FC<DocumentsSectionProps> = ({
         color: "#333",
         boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
       }}>
-      <h3
+      <div
         style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           borderBottom: "2px solid #eee",
-          paddingBottom: "0.5rem",
           marginBottom: "1rem",
-          color: "#222",
+          paddingBottom: "0.5rem",
         }}>
-        {entityType} Documents
-      </h3>
+        <h3 style={{ margin: 0, color: "#222" }}>{entityType} Documents</h3>
+
+        {/* Only show Generate button for Events */}
+        {entityType === "Event" && (
+          <button
+            onClick={handleGenerateContract}
+            disabled={generating}
+            style={{
+              backgroundColor: "#FF6F61", // Electric Coral
+              color: "white",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "6px",
+              fontWeight: "bold",
+              cursor: generating ? "not-allowed" : "pointer",
+              boxShadow: "0 4px 10px 0 rgba(255, 111, 97, 0.3)",
+              transition: "all 0.2s",
+            }}>
+            {generating ? "Generating..." : "✨ Generate Contract"}
+          </button>
+        )}
+      </div>
 
       <div style={{ marginBottom: "1.5rem" }}>
         <FileUploader
@@ -154,7 +198,7 @@ export const DocumentsSection: React.FC<DocumentsSectionProps> = ({
                 <th style={{ padding: "12px", borderTopLeftRadius: "6px" }}>
                   File Name
                 </th>
-                <th style={{ padding: "12px" }}>Category</th> {/* NEW COLUMN */}
+                <th style={{ padding: "12px" }}>Category</th>
                 <th style={{ padding: "12px" }}>Size</th>
                 <th style={{ padding: "12px" }}>Uploaded</th>
                 <th style={{ padding: "12px", borderTopRightRadius: "6px" }}>

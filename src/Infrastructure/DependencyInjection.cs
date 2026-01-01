@@ -27,6 +27,8 @@ public static class DependencyInjection
 
     services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+    services.AddTransient<ITelephonyService, TwilioTelephonyService>();
+
     // 3. Communication Services
     services.AddTransient<IEmailSender, SendGridEmailSender>();
     // Note: ITelephonyService registration is deferred for now.

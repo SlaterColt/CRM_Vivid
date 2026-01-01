@@ -1,57 +1,75 @@
 using CRM_Vivid.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging;
+using System.IO;
+using System.Threading.Tasks;
 
-namespace CRM_Vivid.Infrastructure.Services
+namespace CRM_Vivid.Infrastructure.Services;
+
+public class LocalFileStorageService : IFileStorageService
 {
-  public class LocalFileStorageService : IFileStorageService
+  private readonly IWebHostEnvironment _environment;
+  private readonly ILogger<LocalFileStorageService> _logger;
+  private const string UploadsFolderName = "uploads";
+
+  public LocalFileStorageService(IWebHostEnvironment environment, ILogger<LocalFileStorageService> logger)
   {
-    private readonly IWebHostEnvironment _environment;
-    private readonly string _uploadsFolder;
+    _environment = environment;
+    _logger = logger;
+  }
 
-    public LocalFileStorageService(IWebHostEnvironment environment)
+  // --- CORE IMPLEMENTATION: STREAM ---
+  public async Task<string> SaveFileAsync(Stream fileStream, string fileName)
+  {
+    var uploadPath = Path.Combine(_environment.WebRootPath, UploadsFolderName);
+    if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
+
+    var filePath = Path.Combine(uploadPath, fileName);
+    using var targetStream = new FileStream(filePath, FileMode.Create);
+    await fileStream.CopyToAsync(targetStream);
+
+    return GetFileUrl(fileName);
+  }
+
+  // --- INTERFACE ALIAS: UPLOAD (Calls SaveFileAsync) ---
+  public Task<string> UploadAsync(Stream fileStream, string fileName)
+  {
+    return SaveFileAsync(fileStream, fileName);
+  }
+
+  // --- CORE IMPLEMENTATION: BYTES (For PDF Generation) ---
+  public async Task<string> SaveFileAsync(byte[] fileBytes, string fileName)
+  {
+    var uploadPath = Path.Combine(_environment.WebRootPath, UploadsFolderName);
+    if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
+
+    var filePath = Path.Combine(uploadPath, fileName);
+    await File.WriteAllBytesAsync(filePath, fileBytes);
+
+    return GetFileUrl(fileName);
+  }
+
+  // --- CORE IMPLEMENTATION: DELETE ---
+  public Task DeleteFileAsync(string fileName)
+  {
+    var filePath = Path.Combine(_environment.WebRootPath, UploadsFolderName, fileName);
+    if (File.Exists(filePath))
     {
-      _environment = environment;
-
-      // FIX: WebRootPath is null if wwwroot doesn't exist or isn't configured.
-      // We fallback to combining ContentRootPath (project root) with "wwwroot".
-      var webRoot = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
-
-      _uploadsFolder = Path.Combine(webRoot, "uploads");
-
-      // Ensure the directory hierarchy exists
-      if (!Directory.Exists(_uploadsFolder))
-      {
-        Directory.CreateDirectory(_uploadsFolder);
-      }
+      File.Delete(filePath);
     }
+    return Task.CompletedTask;
+  }
 
-    public async Task<string> UploadAsync(Stream fileStream, string fileName)
-    {
-      var extension = Path.GetExtension(fileName);
-      var uniqueFileName = $"{Guid.NewGuid()}{extension}";
-      var filePath = Path.Combine(_uploadsFolder, uniqueFileName);
+  // --- INTERFACE ALIAS: DELETE (Calls DeleteFileAsync) ---
+  public Task DeleteAsync(string storedFileName)
+  {
+    return DeleteFileAsync(storedFileName);
+  }
 
-      using (var targetStream = new FileStream(filePath, FileMode.Create))
-      {
-        await fileStream.CopyToAsync(targetStream);
-      }
-
-      return uniqueFileName;
-    }
-
-    public Task DeleteAsync(string storedFileName)
-    {
-      var filePath = Path.Combine(_uploadsFolder, storedFileName);
-      if (File.Exists(filePath))
-      {
-        File.Delete(filePath);
-      }
-      return Task.CompletedTask;
-    }
-
-    public string GetFileUrl(string storedFileName)
-    {
-      return $"/uploads/{storedFileName}";
-    }
+  // --- CORE IMPLEMENTATION: GET URL ---
+  public string GetFileUrl(string storedFileName)
+  {
+    // Ensure we return a web-friendly relative path
+    return $"/{UploadsFolderName}/{storedFileName}";
   }
 }

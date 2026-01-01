@@ -1,8 +1,7 @@
 // FILE: frontend_harness/src/apiClient.ts (COMPLETE REPLACEMENT)
 import axios from 'axios';
 import { 
-  type Document, 
-  type EventFinancials, 
+  type EventFinancialsDto, 
   type SendTemplateEmailCommand,
   type TemplateDto, 
   type ContactDto,
@@ -13,8 +12,8 @@ import {
   type EmailLogDto,
   type SubmitLeadCommand,
   RecipientType,
+  type DocumentDto,
 } from './types';
-
 
 // Define the base URL of your local API
 const API_BASE_URL = 'http://localhost:5179';
@@ -58,8 +57,8 @@ export const deleteDocument = async (id: number): Promise<void> => {
 
 // --- FINANCIALS SERVICES ---
 
-export const getEventFinancials = async (eventId: string): Promise<EventFinancials> => {
-  const response = await apiClient.get<EventFinancials>(`/api/events/${eventId}/financials`);
+export const getEventFinancials = async (eventId: string): Promise<EventFinancialsDto> => {
+  const response = await apiClient.get<EventFinancialsDto>(`/api/events/${eventId}/financials`);
   return response.data;
 };
 
@@ -199,4 +198,33 @@ export const scheduleFollowUp = async (
   const payload = { contactId, templateId, scheduleTime, type };
   const response = await apiClient.post<string>('/api/automation/schedule-followup', payload);
   return response.data;
+};
+
+// FIXED: Interface matches Backend expectation of 'TemplateContent'
+export interface ScheduleEmailCommand {
+  contact: ContactDto;
+  templateId?: string;
+  subject: string;
+  templateContent: string; // RENAMED from 'body' to match backend property
+  scheduleTime: string;
+}
+
+export const scheduleEmail = async (command: ScheduleEmailCommand): Promise<void> => {
+  // DIAGNOSTIC LOG (You can remove this later)
+  console.log("🚀 SENDING PAYLOAD:", JSON.stringify(command, null, 2)); 
+  await apiClient.post('/api/automation/schedule-email', command);
+};
+
+export const generateContract = async (eventId: string): Promise<DocumentDto> => {
+  // This endpoint will return the metadata of the created file
+  const response = await apiClient.post<DocumentDto>(`/api/documents/generate-contract/${eventId}`);
+  return response.data;
+};
+
+export const sendSms = async (contactId: string, templateId: string): Promise<void> => {
+  // This hits the AutomationController endpoint for SMS
+  await apiClient.post('/api/automation/send-sms', { 
+    contactId: contactId, 
+    templateId: templateId 
+  });
 };

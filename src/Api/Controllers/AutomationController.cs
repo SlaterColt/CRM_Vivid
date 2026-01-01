@@ -40,7 +40,17 @@ public class AutomationController : ControllerBase
     return BadRequest(new { Message = "Failed to queue SMS message." });
   }
 
-  // Placeholder for future general automation actions
-  // [HttpPost("trigger-workflow")]
-  // public IActionResult TriggerWorkflow(...) { ... }
+  [HttpPost("schedule-email")]
+  public async Task<IActionResult> ScheduleEmail([FromBody] ScheduleEmailCommand command)
+  {
+    // This accepts the full DTO structure defined in your Command
+    var success = await _sender.Send(command);
+
+    if (success)
+    {
+      return Ok(new { Message = "Email scheduled/sent successfully." });
+    }
+    return BadRequest(new { Message = "Failed to schedule email." });
+  }
+
 }

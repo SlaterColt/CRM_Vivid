@@ -30,6 +30,8 @@ namespace CRM_Vivid.Core.Entities
 
     public Guid RelatedEntityId { get; set; }
 
+    public string Url { get; set; } = string.Empty;
+
     [Required]
     [MaxLength(50)]
     public required string RelatedEntityType { get; set; }

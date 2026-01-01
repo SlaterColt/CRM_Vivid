@@ -2,7 +2,7 @@ using CRM_Vivid.Application.Exceptions;
 using CRM_Vivid.Application.Common.Interfaces;
 using CRM_Vivid.Core.Entities;
 using MediatR;
-using Task = System.Threading.Tasks.Task; // Fix ambiguity here too just in case
+using Task = System.Threading.Tasks.Task;
 
 namespace CRM_Vivid.Application.Templates.Commands;
 
@@ -27,7 +27,8 @@ public class DeleteTemplateCommandHandler : IRequestHandler<DeleteTemplateComman
       throw new NotFoundException(nameof(Template), request.Id);
     }
 
-    _context.Templates.Remove(entity);
+    entity.IsDeleted = true;
+
     await _context.SaveChangesAsync(cancellationToken);
   }
 }
